@@ -48,12 +48,6 @@ Object.keys(proxyTable).forEach(function (context) {
   app.use(proxyMiddleware(options.filter || context, options))
 })
 
-// proxy代理，上方写的好像有误。。
-// var context = config.dev.context
-// var options = proxyTable.proxy
-// if (context.length) {
-//   app.use(proxyMiddleware(context, options))
-// }
 
 // handle fallback for HTML5 history API
 app.use(require('connect-history-api-fallback')())
