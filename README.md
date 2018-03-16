@@ -1,7 +1,7 @@
 # vue-projectManage
 基于Vue.js实现的项目管理系统
 
-需要配合[后台接口](https://gitee.com/vilson/ApiForProjectManage)使用
+需要配合[后端接口](https://gitee.com/vilson/ApiForProjectManage)使用
 ### 演示地址
 > [项目管理系统](https://project.vilson.xyz)
 ### 环境 ###
