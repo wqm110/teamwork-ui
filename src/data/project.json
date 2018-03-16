@@ -1,0 +1,62 @@
+{
+  "project_state":[
+    {
+      "name": "未启动",
+      "value": 0
+    },
+    {
+      "name": "进行中",
+      "value": 1
+    },
+    {
+      "name": "已搁置",
+      "value": 2
+    },
+    {
+      "name": "已关闭",
+      "value": 3
+    },
+    {
+      "name": "测试中",
+      "value": 4
+    },
+    {
+      "name": "已完成",
+      "value": 5
+    },
+    {
+      "name": "维护中",
+      "value": 6
+    }
+  ],
+  "project_level":[
+    {
+      "name": "C-",
+      "value": "1"
+    },
+    {
+      "name": "C",
+      "value": "2"
+    },
+    {
+      "name": "B",
+      "value": "3"
+    },
+    {
+      "name": "B+",
+      "value": "4"
+    },
+    {
+      "name": "A",
+      "value": "5"
+    },
+    {
+      "name": "A+",
+      "value": "6"
+    },
+    {
+      "name": "S",
+      "value": "7"
+    }
+  ]
+}
