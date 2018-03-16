@@ -1,7 +1,27 @@
 # vue-projectManage
 基于Vue.js实现的项目管理系统
+
+需要配合[后台接口](https://gitee.com/vilson/ApiForProjectManage)使用
 ### 演示地址
 > [项目管理系统](https://project.vilson.xyz)
+### 环境 ###
+- Node.js
+### 安装依赖 ###
+```
+$ cd projectManage
+$ npm install
+```
+### 编译 ###
+- 测试环境
+```
+npm run dev
+访问 http://localhost:8090
+```
+- 生产环境 
+```
+npm run build
+编译后将dist目录发布到服务端
+```
 ### 界面截图
 ![1](https://static.vilson.xyz/1.png)
 ![1](https://static.vilson.xyz/2.png)
