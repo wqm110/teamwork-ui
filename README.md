@@ -8,8 +8,7 @@
 - Node.js
 ### 安装依赖 ###
 ```
-$ cd projectManage
-$ npm install
+npm install
 ```
 ### 编译 ###
 - 测试环境
