@@ -2,6 +2,8 @@
 基于Vue.js实现的项目管理系统
 
 需要配合[后端接口](https://gitee.com/vilson/ApiForProjectManage)使用
+
+有不明白的地方的可以加群：275264059，或者联系我，QQ：545522390
 ### 演示地址
 > [https://project.vilson.xyz](https://project.vilson.xyz)
 ### 环境 ###
