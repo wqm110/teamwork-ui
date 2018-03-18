@@ -23,6 +23,8 @@ npm run dev
 npm run build
 编译后将dist目录发布到服务端
 ```
+### 登陆 ###
+账号：admin 密码：123456
 ### 界面截图
 ![1](https://static.vilson.xyz/1.png)
 ![1](https://static.vilson.xyz/2.png)
