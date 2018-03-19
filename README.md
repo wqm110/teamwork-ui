@@ -16,7 +16,7 @@ npm install
 - 测试环境
 ```
 npm run dev
-访问 http://localhost:8090
+访问 http://127.0.0.1:8090
 ```
 - 生产环境 
 ```
