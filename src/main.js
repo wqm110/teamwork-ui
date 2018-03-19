@@ -16,7 +16,7 @@ import socketio from 'socket.io-client';
 
 Vue.config.productionTip = false;
 Vue.use(iView);
-Vue.use(VueSocketio, socketio('http://192.168.1.183:2120'), store);
+Vue.use(VueSocketio, socketio('http://127.0.0.1:2120'), store);
 // Vue.use(VueSocketio, socketio('https://39.108.2.63:2120'), store);
 router.beforeEach((to, from, next) => {
   next()
