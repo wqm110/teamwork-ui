@@ -3,7 +3,7 @@
  */
 module.exports = {
     NODE_ENV: 'development',//production,development
-    DEV_URL: 'http://192.168.1.183/projectManageApi/public',
+    DEV_URL: 'http://localhost/projectManageApi/public',
     PROD_URL: 'https://project.vilson.xyz/public',
     WEB_URL: 'https://project.vilson.xyz'
 }
