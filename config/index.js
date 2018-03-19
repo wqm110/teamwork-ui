@@ -30,7 +30,7 @@ module.exports = {
         proxyTable: {
             '/api': {
                 // target: 'http://dev.phalapi.com/',
-                target: 'http://localhost/projectManageApi/public/',
+                target: 'http://127.0.0.1/projectManageApi/public/',
                 changeOrigin: true,
                 secure: false,
                 pathRewrite: {
