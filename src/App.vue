@@ -68,7 +68,6 @@
             app.activeKey = meta_info.parent
           }
           let pid = 0
-          console.log(333)
           $.each(app.menu_list_old, function (k, v) {
             if (v.model === app.activeKeyTop) {
               const index = app.openItems.indexOf(v.name)

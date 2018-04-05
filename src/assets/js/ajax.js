@@ -141,7 +141,7 @@ class Ajax {
             if (options.baseURL !== '') {
               window.location = WEB_URL + '/#/login'
             } else {
-              window.location = 'http://192.168.1.183:8090/#/login'
+              window.location = 'http://127.0.0.1:8090/#/login'
             }
           }, 0)
         } else if (response.ret < 500) {

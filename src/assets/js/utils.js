@@ -92,11 +92,11 @@ export const getYiYan = (callback,type) => {
   if(type == undefined){
     type = 'f';
   }
-  let api = 'https://sslapi.hitokoto.cn/?c='+type+'&encode=json'
+  let api = 'https://v1.hitokoto.cn/?c='+type+'&encode=json'
   $.get({
     url: api,
     success: function (data) {
-      callback(JSON.parse(data))
+      callback(data)
     }
   })
 }

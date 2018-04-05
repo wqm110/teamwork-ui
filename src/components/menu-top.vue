@@ -295,7 +295,7 @@
               const permission = showMsgNotification(v.title, v.content, {
                 onclick: function (instance) {
                   // window.location.href = 'http://192.168.1.35:8090/#/project/task/' + project_id
-                  window.open('http://192.168.1.183:8090/#/project/task/' + project_id)
+                  window.open('http://127.0.0.1:8090/#/project/task/' + project_id)
                   // app.$router.push('/project/task/' + project_id)
                 }
               })
@@ -321,7 +321,6 @@
           success: function (res) {
             app.$store.state.notify_no_read_list = res.data.list
             app.$store.state.notify_no_read_count = res.data.count
-            console.log(res.data.count)
             if(res.data.count > 0){
               document.getElementById("icon").href="http://static.vilson.xyz/favicon2.ico"
             }else{
