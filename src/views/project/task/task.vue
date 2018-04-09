@@ -35,9 +35,33 @@
                                 class="task-count" v-if="task_type.list.length > 0"> · {{ task_type.list.length }}</span> <span
                                 class="icon icon-chevron-right"></span>
                         </div>
-                        <a data-title="添加或编辑任务列表" data-gta="{action: 'toggle stage menu'}"
-                           data-original-title="" title=""
-                           class="stage-menu-toggler icon icon-circle-down hinted"></a></header>
+                        <div class="stage-menu-toggler popover">
+                            <Dropdown trigger="click">
+                                <Tooltip placement="left" content="编辑任务列表">
+                                    <a href="javascript:void(0)">
+                                        <Icon type="chevron-down"></Icon>
+                                    </a>
+                                </Tooltip>
+                                <DropdownMenu slot="list">
+                                    <header class="popover-header">
+                                        <p class="popover-title">菜单列表</p>
+                                    </header>
+                                    <DropdownItem class="muted">
+                                        <Icon size="14" class="m-r-xs" type="person"></Icon>
+                                        设置本列所有任务执行者
+                                    </DropdownItem>
+                                    <DropdownItem class="muted">
+                                        <Icon size="14" class="m-r-xs" type="clock"></Icon>
+                                        设置本列所有任务截止时间
+                                    </DropdownItem>
+                                    <DropdownItem class="muted">
+                                        <Icon size="14" class="m-r-xs" type="trash-b"></Icon>
+                                        删除本列所有任务
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                        </div>
+                    </header>
                     <div class="scrum-stage-wrap hidden-creator ui-sortable"
                          :class="{ 'hidden-creator-bottom': task_type.show_card == true}">
                         <section :id="task_type.key + '-section'" class="scrum-stage-content thin-scroll">
@@ -73,7 +97,7 @@
                                                 <span class="icon-wrapper muted" v-if="task.has_file">
                                                      <Icon type="android-attach"></Icon>
                                                </span>
-                                                <span class="tag tag-color-blue muted" v-for="(tag,tag_index) in task.task_tag_item_list"> {{ tag.name }} </span>
+                                                <span class="tag muted" :class="'tag-color-'+ tag.color" v-for="(tag,tag_index) in task.task_tag_item_list"> {{ tag.name }} </span>
                                                 <span :class="'icon-wrapper text text-' + task.task_execute.color"  v-if="task.execute_state > 0">{{ task.task_execute_name }}</span>
                                             </div>
                                         </div>
@@ -132,7 +156,7 @@
                                         </div>
                                         <div class="task-info-wrapper clearfix">
                                             <div class="task-infos">
-                                                <span class="tag tag-color-blue muted" v-for="(tag,tag_index) in task.task_tag_item_list"> {{ tag.name }} </span>
+                                                <span class="tag muted" :class="'tag-color-'+ tag.color" v-for="(tag,tag_index) in task.task_tag_item_list"> {{ tag.name }} </span>
                                             </div>
                                         </div>
                                     </div>

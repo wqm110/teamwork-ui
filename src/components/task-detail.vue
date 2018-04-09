@@ -244,7 +244,7 @@
                                     <div class="note-aside muted">
                                         <Icon type="ios-pricetag-outline" size="24"></Icon>
                                         <span class="title">标签</span>
-                                        <Tag v-for="(tag,tag_index) in task.task_tag_item_list" :key="tag.key" :name="tag_index"  :color="tag.color" closable @on-close="removeTaskTag">{{ tag.name }}</Tag>
+                                        <Tag class="tag-circle" v-for="(tag,tag_index) in task.task_tag_item_list" :key="tag.key" :name="tag_index"  :color="tag.color" closable @on-close="removeTaskTag">{{ tag.name }}</Tag>
                                         <Dropdown class="task-level-list" trigger="click" @on-click="addTaskTag">
                                             <a class="muted m-l-xs">
                                                 <Icon type="ios-plus-outline" size="20"></Icon>
