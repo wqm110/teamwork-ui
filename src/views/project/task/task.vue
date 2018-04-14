@@ -36,25 +36,25 @@
                                 class="icon icon-chevron-right"></span>
                         </div>
                         <div class="stage-menu-toggler popover">
-                            <Dropdown trigger="click">
-                                <Tooltip placement="left" content="编辑任务列表">
-                                    <a href="javascript:void(0)">
+                            <Dropdown trigger="click" @on-click="taskTypeAction">
+                                <!--<Tooltip placement="left" content="编辑任务列表">-->
+                                    <a href="javascript:void(0)" class="menu-toggler-title">
                                         <Icon type="chevron-down"></Icon>
                                     </a>
-                                </Tooltip>
+                                <!--</Tooltip>-->
                                 <DropdownMenu slot="list">
                                     <header class="popover-header">
                                         <p class="popover-title">菜单列表</p>
                                     </header>
-                                    <DropdownItem class="muted">
+                                    <DropdownItem class="muted" :name="'set_executor_' + task_type.key + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="person"></Icon>
                                         设置本列所有任务执行者
                                     </DropdownItem>
-                                    <DropdownItem class="muted">
+                                    <DropdownItem class="muted" :name="'set_end_time_' + task_type.key + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="clock"></Icon>
                                         设置本列所有任务截止时间
                                     </DropdownItem>
-                                    <DropdownItem class="muted">
+                                    <DropdownItem class="muted" :name="'del_task_' + task_type.key + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="trash-b"></Icon>
                                         删除本列所有任务
                                     </DropdownItem>
@@ -326,6 +326,15 @@
             </div>
         </Modal>
         <Modal
+                v-model="del_type_task_modal"
+                title="操作提示">
+            <p>真的要将删除本列表的所有任务吗？ </p>
+            <div slot="footer">
+                <Button type="text" @click="del_type_task_modal = false">再想想</Button>
+                <Button type="error" :loading="send_loading" @click="delTypeTask">真的</Button>
+            </div>
+        </Modal>
+        <Modal
                 v-model="user_modal"
                 width="360"
                 class="user-modal">
@@ -437,6 +446,10 @@
         del_user_id: 0,
 
         project_setting_modal: false,
+
+        del_type_task_modal: false,
+        del_type_task_id: 0,
+        del_type_index: 0,
 
         timer: false,
         screenHeight: document.body.clientHeight,
@@ -833,6 +846,34 @@
             if (res.ret == 200) {
               app.$Message.success('已将成员移出本项目');
               app.getProjectUserList()
+            } else {
+              app.$Message.warning(res.msg);
+            }
+          }
+        });
+      },
+      taskTypeAction(name) {
+        let type_key_list = name.split('_')
+        const type_key = type_key_list[type_key_list.length - 2]
+        const type_index = type_key_list[type_key_list.length - 1]
+        this.del_type_task_modal = true
+        this.del_type_task_id = type_key
+        this.del_type_index = type_index
+      },
+      delTypeTask() {
+        let app = this
+        app.send_loading = true
+        utils.sendAjax({
+          url: 'Project_Task.delTypeTask',
+          data: {
+            type_id: app.del_type_task_id,
+            project_id: app.project_id,
+          },
+          success: function (res) {
+            app.send_loading = false
+            app.del_type_task_modal = false
+            if (res.ret == 200) {
+              app.task_type_list[app.del_type_index].list = []
             } else {
               app.$Message.warning(res.msg);
             }

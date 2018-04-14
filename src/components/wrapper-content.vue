@@ -10,7 +10,7 @@
                 <slot></slot>
             </div>
             <!--<div class="layout-copy">
-                2016-2017 &copy; JinBo TeamConsole
+                2016-2017 &copy; Pear TeamConsole
             </div>-->
         </div>
     </div>

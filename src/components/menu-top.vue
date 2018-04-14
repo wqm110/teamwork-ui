@@ -258,6 +258,20 @@
           return 'menu-top hide';
         }
       },
+      showNoticeText(){
+        if(this.notify_no_read_count > 0){
+          return '通知 ('+ this.notify_no_read_count +')'
+        }else{
+          return '通知'
+        }
+      },
+      showMessageText(){
+        if(this.notify_no_read_count > 0){
+          return '消息 ('+ this.notify_no_read_count +')'
+        }else{
+          return '消息'
+        }
+      },
       myHandlerActive:
 
         function () {
@@ -267,20 +281,6 @@
         }
     },
     methods: {
-      showNoticeText(){
-           if(this.notify_no_read_count > 0){
-             return '通知 ('+ this.notify_no_read_count +')'
-           }else{
-             return '通知'
-           }
-      },
-      showMessageText(){
-           if(this.notify_no_read_count > 0){
-             return '消息 ('+ this.notify_no_read_count +')'
-           }else{
-             return '消息'
-           }
-      },
       getNotifyList() {
         let app = this
         sendAjax({

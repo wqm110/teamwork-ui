@@ -31,7 +31,7 @@
                     <Tab-pane label="我执行的" name="task_executor">
                         <Table
                                 :no-data-text="' '"
-                                :show-header="false"
+                                :show-header="show_header"
                                 :columns="task_columns"
                                 :data="taskExecutorList"
                                 :row-class-name="rowClass"
@@ -41,7 +41,7 @@
                     <Tab-pane label="我创建的" name="task_actor">
                         <Table
                                 :no-data-text="' '"
-                                :show-header="false"
+                                :show-header="show_header"
                                 :columns="task_columns"
                                 :data="taskActorList"
                                 :row-class-name="rowClass"
@@ -51,7 +51,7 @@
                     <Tab-pane label="我参与的" name="task_join">
                         <Table
                                 :no-data-text="' '"
-                                :show-header="false"
+                                :show-header="show_header"
                                 :columns="task_columns"
                                 :data="taskJoinList"
                                 :row-class-name="rowClass"
@@ -187,6 +187,7 @@
         taskActorCount: 0,
         taskJoinList: [],
         taskJoinCount: 0,
+        show_header: false,
         show_task_detail: false,
         task_id: 0,
         task_index: 0,

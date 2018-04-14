@@ -85,7 +85,7 @@
               return false
             }
           });
-          
+
           if (name === 'login') {
             $("#menu-top").attr("class",'menu-top hide')
             $("#menu-slide").attr("class",'menu-slide hide')
