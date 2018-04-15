@@ -73,7 +73,7 @@
                         <img width="25" class="img-circle"
                              :src="user.avatar"
                              alt="">
-                        <span class="name-label">{{ user.realname }}（{{ user.user_name }}）</span>
+                        <span class="name-label">{{ user.realname }}（{{ user.account }}）</span>
                         <span class="pull-right">
                                 <span v-if="user.is_add" style="color: #A6A6A6">已加入</span>
                                 <Button type="ghost" size="small" v-else

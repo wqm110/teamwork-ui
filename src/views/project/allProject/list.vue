@@ -45,7 +45,7 @@
                 </div>
                 <Table :loading="loading" border :columns="columns" :data="project_list" class="no-border-table"
                        @on-selection-change="selectItem"></Table>
-                <Page v-if="teamCount > 0" :total="teamCount" :current="page_num" @on-change="changePage"
+                <Page v-if="teamCount > 0" :total="teamCount" :page-size="page_size" :current="page_num" @on-change="changePage"
                       @on-page-size-change="changePageSize" size="small" show-total show-sizer class="table-page">
                     <slot class="total">共 {{ teamCount }} 条</slot>
                 </Page>
@@ -68,7 +68,7 @@
                         <img width="25" class="img-circle"
                              :src="user.avatar"
                              alt="">
-                        <span class="name-label">{{ user.realname }}（{{ user.user_name }}）</span>
+                        <span class="name-label">{{ user.realname }}（{{ user.account }}）</span>
                         <span class="pull-right">
                                 <span v-if="user.is_add" style="color: #A6A6A6">已加入</span>
                                 <Button type="ghost" size="small" v-else
@@ -187,7 +187,7 @@
         form_modal: false,
         select_projects: [],
         send_loading: false,
-        page_size: 10,
+        page_size: 40,
         page_num: 1,
         keyword: '',
         loading: false,

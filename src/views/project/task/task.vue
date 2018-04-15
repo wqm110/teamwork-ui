@@ -46,15 +46,15 @@
                                     <header class="popover-header">
                                         <p class="popover-title">菜单列表</p>
                                     </header>
-                                    <DropdownItem class="muted" :name="'set_executor_' + task_type.key + '_' + index">
+                                    <DropdownItem class="muted" :name="'setExecutor_' + task_type.key + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="person"></Icon>
                                         设置本列所有任务执行者
                                     </DropdownItem>
-                                    <DropdownItem class="muted" :name="'set_end_time_' + task_type.key + '_' + index">
+                                    <DropdownItem class="muted" :name="'setEndTime_' + task_type.key + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="clock"></Icon>
                                         设置本列所有任务截止时间
                                     </DropdownItem>
-                                    <DropdownItem class="muted" :name="'del_task_' + task_type.key + '_' + index">
+                                    <DropdownItem class="muted" :name="'delTask_' + task_type.key + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="trash-b"></Icon>
                                         删除本列所有任务
                                     </DropdownItem>
@@ -856,9 +856,14 @@
         let type_key_list = name.split('_')
         const type_key = type_key_list[type_key_list.length - 2]
         const type_index = type_key_list[type_key_list.length - 1]
-        this.del_type_task_modal = true
-        this.del_type_task_id = type_key
-        this.del_type_index = type_index
+        const action = type_key_list[0]
+        switch (action) {
+          case 'delTask':
+            this.del_type_task_modal = true
+            this.del_type_task_id = type_key
+            this.del_type_index = type_index
+            break;
+        }
       },
       delTypeTask() {
         let app = this
@@ -875,7 +880,7 @@
             if (res.ret == 200) {
               app.task_type_list[app.del_type_index].list = []
             } else {
-              app.$Message.warning(res.msg);
+              app.$Message.warning(res.msg)
             }
           }
         });
