@@ -227,6 +227,7 @@
         this.getList()
       },
       nextItem(id,pid,title) {
+        this.page_num = 1
         this.prev_ids.push(pid)
         this.prev_titles.push(title)
         this.pid = id
