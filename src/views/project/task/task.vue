@@ -335,6 +335,15 @@
             </div>
         </Modal>
         <Modal
+                v-model="set_type_endTime_modal"
+                :mask-closable="false"
+                class-name="date-time-modal"
+                title="设置截止时间">
+            <DatePicker type="datetime" placeholder="请选择截止时间" style="width: 100%" v-model="task_type_end_time" :options="date_picker_option" :confirm="true" @on-ok="setTypeTaskEndTime" @on-clear="clearTypeTaskEndTime"></DatePicker>
+            <div slot="footer">
+            </div>
+        </Modal>
+        <Modal
                 v-model="user_modal"
                 width="360"
                 class="user-modal">
@@ -403,6 +412,12 @@
         menu_modal: false,
         user_menu_modal: false,
         show_task_detail: false,
+        date_picker_option: {
+          disabledDate (date) {
+            return date && date.valueOf() < Date.now() - 86400000;
+          }
+        },
+        task_type_end_time: null,
         task_type_list: [],
         project_id: this.$route.params.project_id,
         project: {},
@@ -448,8 +463,9 @@
         project_setting_modal: false,
 
         del_type_task_modal: false,
-        del_type_task_id: 0,
-        del_type_index: 0,
+        set_type_endTime_modal: false,
+        type_task_id: 0,
+        select_task_type_index: 0,
 
         timer: false,
         screenHeight: document.body.clientHeight,
@@ -492,6 +508,11 @@
       },
       project_user_keyword: function () {
         this.project_user_search()
+      },
+      set_type_endTime_modal: function(value){
+        if (value) {
+          this.task_type_end_time = new Date()
+        }
       },
       user_keyword: function () {
         this.user_search()
@@ -860,8 +881,13 @@
         switch (action) {
           case 'delTask':
             this.del_type_task_modal = true
-            this.del_type_task_id = type_key
-            this.del_type_index = type_index
+            this.type_task_id = type_key
+            this.select_task_type_index = type_index
+            break;
+          case 'setEndTime':
+            this.set_type_endTime_modal = true
+            this.type_task_id = type_key
+            this.select_task_type_index = type_index
             break;
         }
       },
@@ -871,19 +897,52 @@
         utils.sendAjax({
           url: 'Project_Task.delTypeTask',
           data: {
-            type_id: app.del_type_task_id,
+            type_id: app.type_task_id,
             project_id: app.project_id,
           },
           success: function (res) {
             app.send_loading = false
             app.del_type_task_modal = false
             if (res.ret == 200) {
-              app.task_type_list[app.del_type_index].list = []
+              app.task_type_list[app.select_task_type_index].list = []
             } else {
               app.$Message.warning(res.msg)
             }
           }
         });
+      },
+      setTypeTaskEndTime() {
+        let app = this
+        app.send_loading = true
+        let end_time = null
+        if (app.task_type_end_time != null) {
+          end_time = dateTime.date_format(app.task_type_end_time,"yyyy-MM-dd hh:mm:ss");
+        }
+        utils.sendAjax({
+          url: 'Project_Task.setTypeTaskEndTime',
+          data: {
+            type_id: app.type_task_id,
+            end_time: end_time,
+            project_id: app.project_id,
+          },
+          success: function (res) {
+            app.send_loading = false
+            app.set_type_endTime_modal = false
+            if (res.ret == 200) {
+              $.each(app.task_type_list[app.select_task_type_index].list,function (key,value) {
+                value.end_time = end_time
+              })
+              // app.getTaskType()
+            } else {
+              app.$Message.warning(res.msg)
+            }
+          }
+        });
+      },
+      clearTypeTaskEndTime() {
+        let app = this
+        app.task_type_end_time = null
+        app.setTypeTaskEndTime()
       },
       projectUpdate(value) {
         this.project = value
