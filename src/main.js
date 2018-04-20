@@ -13,7 +13,7 @@ import {getPushData} from './assets/js/utils'
 import {showMsgNotification} from "./assets/js/notify"
 import VueSocketio from 'vue-socket.io';
 import socketio from 'socket.io-client';
-
+import CheckLabel from './components/check-label';
 Vue.config.productionTip = false;
 Vue.use(iView);
 Vue.use(VueSocketio, socketio('http://127.0.0.1:2120'), store);
@@ -24,6 +24,8 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach((to, from, next) => {
 });
+
+Vue.component('CheckLabel', CheckLabel)
 
 /* eslint-disable no-new */
 new Vue({

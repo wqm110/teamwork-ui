@@ -26,7 +26,7 @@
     name: 'app',
     components: {
       MenuTop,
-      MenuSlide,
+      MenuSlide
     },
     data() {
       return {

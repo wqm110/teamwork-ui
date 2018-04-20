@@ -336,10 +336,39 @@
         </Modal>
         <Modal
                 v-model="set_type_endTime_modal"
-                :mask-closable="false"
                 class-name="date-time-modal"
                 title="设置截止时间">
             <DatePicker type="datetime" placeholder="请选择截止时间" style="width: 100%" v-model="task_type_end_time" :options="date_picker_option" :confirm="true" @on-ok="setTypeTaskEndTime" @on-clear="clearTypeTaskEndTime"></DatePicker>
+            <div slot="footer">
+            </div>
+        </Modal>
+        <Modal
+                v-model="set_executor_modal"
+                width="360"
+                class="user-modal">
+            <p slot="header" style="text-align:center;">
+                <span>设置任务执行人</span>
+            </p>
+            <Form>
+                <Form-item label="成员搜索" prop="user_truename">
+                    <Input type="text" v-model="project_user_keyword" placeholder="输入成员账号 / 姓名进行查找"/>
+                </Form-item>
+                <p class="list-title">项目成员</p>
+                <ul class="user-list" v-if="data_loading == false">
+                    <li v-for="(user,index) in project_user_list">
+                        <img width="25" class="img-circle"
+                             :src="user.avatar"
+                             alt="">
+                        <span class="name-label">{{ user.realname }}（{{ user.account }}）</span>
+                        <span class="pull-right">
+                                <Button type="ghost" size="small" @click="setTypeTaskExecutor(user.u_user_id,index)" :loading="send_loading">设置</Button>
+                            </span>
+                    </li>
+                </ul>
+                <div style="text-align: center" v-if="data_loading == true">
+                    <p class="tip" style="padding: 45px 0;">加载中...</p>
+                </div>
+            </Form>
             <div slot="footer">
             </div>
         </Modal>
@@ -464,6 +493,7 @@
 
         del_type_task_modal: false,
         set_type_endTime_modal: false,
+        set_executor_modal: false,
         type_task_id: 0,
         select_task_type_index: 0,
 
@@ -881,15 +911,16 @@
         switch (action) {
           case 'delTask':
             this.del_type_task_modal = true
-            this.type_task_id = type_key
-            this.select_task_type_index = type_index
             break;
           case 'setEndTime':
             this.set_type_endTime_modal = true
-            this.type_task_id = type_key
-            this.select_task_type_index = type_index
+            break;
+          case 'setExecutor':
+            this.set_executor_modal = true
             break;
         }
+        this.type_task_id = type_key
+        this.select_task_type_index = type_index
       },
       delTypeTask() {
         let app = this
@@ -933,6 +964,30 @@
                 value.end_time = end_time
               })
               // app.getTaskType()
+            } else {
+              app.$Message.warning(res.msg)
+            }
+          }
+        });
+      },
+      setTypeTaskExecutor(user_id) {
+        let app = this
+        app.send_loading = true
+        utils.sendAjax({
+          url: 'Project_Task.setTypeTaskExecutor',
+          data: {
+            type_id: app.type_task_id,
+            user_id: user_id,
+            project_id: app.project_id,
+          },
+          success: function (res) {
+            app.project_user_keyword = ''
+            app.send_loading = false
+            app.set_executor_modal = false
+            if (res.ret == 200) {
+              $.each(app.task_type_list[app.select_task_type_index].list,function (key,value) {
+                value.executor_user_info = res.data
+              })
             } else {
               app.$Message.warning(res.msg)
             }
