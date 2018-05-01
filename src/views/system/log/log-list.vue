@@ -114,12 +114,10 @@
         columns: [
           {
             title: 'ID',
-            width: '10%',
             key: 'id'
           },
           {
             title: '内容',
-            width: '60%',
             key: 'content'
           },
           {

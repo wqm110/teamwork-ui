@@ -50,6 +50,7 @@ const ProjectLevelAdd = r => require.ensure([], () => r(require('../views/projec
 const ProjectLevelEdit = r => require.ensure([], () => r(require('../views/project/level/edit')), 'ProjectLevelEdit')
 const ProjectFileList = r => require.ensure([], () => r(require('../views/project/file/file')), 'ProjectFileList')
 const ProjectBuildList = r => require.ensure([], () => r(require('../views/project/build/build')), 'ProjectBuildList')
+const ProjectType = r => require.ensure([], () => r(require('../views/project/projectType/list')), 'ProjectType')
 
 const TeamList = r => require.ensure([], () => r(require('../views/team/list')), 'TeamList')
 const TeamAdd = r => require.ensure([], () => r(require('../views/team/add')), 'TeamAdd')
@@ -65,6 +66,8 @@ const TeamUserPositionDetail = r => require.ensure([], () => r(require('../views
 
 const ProjectTask = r => require.ensure([], () => r(require('../views/project/task/task')), 'ProjectTask')
 const ProjectTaskOverview = r => require.ensure([], () => r(require('../views/project/task/task-overview')), 'ProjectTaskOverview')
+const ProjectTaskTypeTemplate = r => require.ensure([], () => r(require('../views/project/task/task_type_template_list')), 'ProjectTaskTypeTemplate')
+
 
 const PersonalNoticeList = r => require.ensure([], () => r(require('../views/personal/notice/list')), 'PersonalNoticeList')
 
@@ -262,6 +265,12 @@ export default new Router({
       meta: {model: 'Project'},
     },
     {
+      name: 'project_type_list',
+      path: '/project/project_type/list',
+      component: ProjectType,
+      meta: {model: 'Project'},
+    },
+    {
       name: 'project_level_list',
       path: '/project/level/list',
       component: ProjectLevelList,
@@ -292,6 +301,12 @@ export default new Router({
       path: '/project/taskoverview/:team_id',
       component: ProjectTaskOverview,
       meta: {model: 'Project', parent: '/project/taskoverview/0'},
+    },
+    {
+      name: 'project_task_type_template',
+      path: '/project/task_type_template/:type_id',
+      component: ProjectTaskTypeTemplate,
+      meta: {model: 'Project', parent: '/project/project_type/list'},
     },
     {
       name: 'team_list',

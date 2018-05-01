@@ -9,7 +9,7 @@ import config from '../../assets/js/config'
 // let globalXHR = {},
 //     goErrorPage = redirect => {
 //         if (redirect) {
-//             window.location = 'http://localhost:8090/#/login'
+//             window.location = 'http://localhost:8060/#/login'
 //         }
 //     }
 const NODE_ENV = config.NODE_ENV
@@ -141,7 +141,7 @@ class Ajax {
             if (options.baseURL !== '') {
               window.location = WEB_URL + '/#/login'
             } else {
-              window.location = 'http://127.0.0.1:8090/#/login'
+              window.location = 'http://127.0.0.1:8060/#/login'
             }
           }, 0)
         } else if (response.ret < 500) {
@@ -150,6 +150,7 @@ class Ajax {
             desc: response.msg,
             duration: 5
           })
+          window.history.go(-1)
           // Message.warning({
           //   content: response.msg,
           //   duration: 5

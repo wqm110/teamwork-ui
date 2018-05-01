@@ -294,8 +294,8 @@
               ids.push(v.id)
               const permission = showMsgNotification(v.title, v.content, {
                 onclick: function (instance) {
-                  // window.location.href = 'http://192.168.1.35:8090/#/project/task/' + project_id
-                  window.open('http://127.0.0.1:8090/#/project/task/' + project_id)
+                  // window.location.href = 'http://192.168.1.35:8060/#/project/task/' + project_id
+                  window.open('http://127.0.0.1:8060/#/project/task/' + project_id)
                   // app.$router.push('/project/task/' + project_id)
                 }
               })

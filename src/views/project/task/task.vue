@@ -46,15 +46,15 @@
                                     <header class="popover-header">
                                         <p class="popover-title">菜单列表</p>
                                     </header>
-                                    <DropdownItem class="muted" :name="'setExecutor_' + task_type.key + '_' + index">
+                                    <DropdownItem class="muted" :name="'setExecutor_' + task_type.id + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="person"></Icon>
                                         设置本列所有任务执行者
                                     </DropdownItem>
-                                    <DropdownItem class="muted" :name="'setEndTime_' + task_type.key + '_' + index">
+                                    <DropdownItem class="muted" :name="'setEndTime_' + task_type.id + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="clock"></Icon>
                                         设置本列所有任务截止时间
                                     </DropdownItem>
-                                    <DropdownItem class="muted" :name="'delTask_' + task_type.key + '_' + index">
+                                    <DropdownItem class="muted" :name="'delTask_' + task_type.id + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="trash-b"></Icon>
                                         删除本列所有任务
                                     </DropdownItem>
@@ -64,7 +64,7 @@
                     </header>
                     <div class="scrum-stage-wrap hidden-creator ui-sortable"
                          :class="{ 'hidden-creator-bottom': task_type.show_card == true}">
-                        <section :id="task_type.key + '-section'" class="scrum-stage-content thin-scroll">
+                        <section :id="task_type.id + '-section'" class="scrum-stage-content thin-scroll">
                             <!--未完成列表-->
                             <ul class="scrum-stage-tasks">
                                 <li class="task task-card ui-sortable-handle"
@@ -133,7 +133,7 @@
                                                 @click="hideTaskCard(index)">取消
                                         </Button>
                                         <Button type="primary" size="large" class="middle-btn"
-                                                @click="addTask(task_type.key,index)">创建
+                                                @click="addTask(task_type.id,index)">创建
                                         </Button>
                                     </div>
                                 </form>
@@ -511,7 +511,7 @@
       task_type_list() {
         let app = this
         $.each(app.task_type_list, function (k, v) {
-          app.getList(v.key, k)
+          app.getList(v.id, k)
         })
       },
       project_id (){
@@ -569,7 +569,7 @@
       const m = moment().locale('zh-cn')
       app.default_executor = app.user_info
       app.getTaskType()
-      app.getProjectInfo()
+      // app.getProjectInfo()
       app.getProjectUserList()
       app.$options.sockets.task_dynamic = (data) => {
         const notice_data = JSON.parse(data)
@@ -605,9 +605,12 @@
         let app = this
         app.task_type_list = []
         utils.sendAjax({
-          url: 'Project_Task.getTaskTypeList',
+          url: 'Project_TaskType.getList',
+          data: {
+            project_id: app.project_id
+          },
           success: function (res) {
-            app.task_type_list = res.data
+            app.task_type_list = res.data.list
           }
         });
       },

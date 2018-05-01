@@ -65,7 +65,7 @@ new Vue({
         const permission = showMsgNotification(push_data.title, push_data.notice, {
           showTime: 10000,
           onclick: function () {
-            window.open('http://127.0.0.1:8090/#/project/task/' + push_data.data.project_id)
+            window.open('http://127.0.0.1:8060/#/project/task/' + push_data.data.project_id)
           }
         })
         if (permission === false) {

@@ -15,7 +15,7 @@
                                 <Dropdown-item v-for="(task_type,index) in task_type_list" :key="index"
                                                :name="index">
                                     <span class="muted" style="line-height: 25px;">{{ task_type.name }}</span>
-                                    <Icon type="ios-checkmark-empty" size="24" style="float: right" class="muted" v-if="task_type.key == task.task_type"></Icon>
+                                    <Icon type="ios-checkmark-empty" size="24" style="float: right" class="muted" v-if="task_type.id == task.task_type"></Icon>
                                 </Dropdown-item>
                             </Dropdown-menu>
                         </Dropdown>
@@ -826,9 +826,7 @@
         this.hidden_task_content = true
         //当前任务信息
         this.getInfo()
-        //获取任务类型列表
-        this.getTaskType()
-        //获取任务类型列表
+        //获取等级列表
         this.getTaskLevel()
         //获取任务执行状态列表
         this.getTaskExecuteState()
@@ -864,6 +862,8 @@
             app.task = res.data
             app.initContent(app.task.desc)
             app.getProjectUserList(app.task.project)
+            //获取任务类型列表
+            app.getTaskType(app.task.project)
 
             app.date_picker_data.task_begin_time = app.task.begin_time
             app.date_picker_data.task_end_time = app.task.end_time
@@ -889,12 +889,15 @@
         })
       },
       //获取任务类型列表
-      getTaskType() {
+      getTaskType(project_id) {
         let app = this
         utils.sendAjax({
-          url: 'Project_Task.getTaskTypeList',
+          url: 'Project_TaskType.getList',
+          data:{
+            project_id: project_id
+          },
           success: function (res) {
-            app.task_type_list = res.data
+            app.task_type_list = res.data.list
           }
         });
       },
@@ -927,7 +930,7 @@
       },
       changeTaskType (index){
         let app = this
-        const type = app.task_type_list[index].key
+        const type = app.task_type_list[index].id
         const type_name = app.task_type_list[index].name
         utils.sendAjax({
           url: 'Project_Task.editTask',

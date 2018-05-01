@@ -112,9 +112,9 @@
                 </Form-item>
                 <Form-item prop="type_id">
                     <Select v-model="formValidate.type_id" placeholder="项目类型" filterable>
-                        <Option v-for="item in type_list" :value="item.key" :key="item.key" :label="item.name">
+                        <Option v-for="item in type_list" :value="item.id" :key="item.id" :label="item.name">
                             <span> {{ item.name }}</span>
-                            <span style="float:right;color:#ccc"> {{ item.desc }}</span>
+                            <!--<span style="float:right;color:#ccc;height: 35px;display: flex;align-items: center;width: 100%;"> {{ item.memo }}</span>-->
                         </Option>
                     </Select>
                 </Form-item>
@@ -131,6 +131,12 @@
                         <Option v-for="item in ticket_list" :value="item.key" :key="item.key" :label="item.name">
                             <span> {{ item.name }}</span>
                         </Option>
+                    </Select>
+                </Form-item>
+                <Form-item label="项目公开性" prop="access_control_type">
+                    <Select v-model="formValidate.access_control_type" placeholder="项目公开性" filterable>
+                        <Option value="open" label="公开"></Option>
+                        <Option value="private" label="私有"></Option>
                     </Select>
                 </Form-item>
                 <Form-item prop="project_desc">
@@ -362,6 +368,7 @@
         form_submit: '添加',
         formValidate: {
           project_id: 0,
+          access_control_type: 'open',
           name: '',
           level_id: 0,
           ticket: 0,
@@ -399,6 +406,7 @@
         if(value === false) {
           this.formValidate = {
             project_id: 0,
+            access_control_type: 'open',
             name: '',
             level_id: 0,
             ticket: 0,
@@ -453,14 +461,20 @@
           url: 'Project_Project.getInfo',
           data: {project_id: app.formValidate.project_id},
           success: function (res) {
-            if (res.data) {
-              app.formValidate.name = res.data.name
-              app.formValidate.level_id = res.data.level_id
-              app.formValidate.ticket = res.data.ticket
-              app.formValidate.type_id = res.data.type_id
-              app.formValidate.end = res.data.end
-              app.formValidate.prepayDate = res.data.prepayDate
-              app.formValidate.project_desc = res.data.project_desc
+            if (res.ret != 200) {
+              app.$Message.warning(res.msg);
+              window.history.go(-1)
+            }else{
+              if (res.data) {
+                app.formValidate.name = res.data.name
+                app.formValidate.access_control_type = res.data.access_control_type
+                app.formValidate.level_id = res.data.level_id
+                app.formValidate.ticket = res.data.ticket
+                app.formValidate.type_id = res.data.type_id
+                app.formValidate.end = res.data.end
+                app.formValidate.prepayDate = res.data.prepayDate
+                app.formValidate.project_desc = res.data.project_desc
+              }
             }
           }
         });
@@ -559,9 +573,9 @@
       getTypeList() {
         let app = this
         utils.sendAjax({
-          url: 'Project_Project.getProjectTypeList',
+          url: 'Project_ProjectType.getList',
           success: function (res) {
-            app.type_list = res.data
+            app.type_list = res.data.list
           }
         });
       },

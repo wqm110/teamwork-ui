@@ -43,9 +43,9 @@
                                 <i-col span="12">
                                     <Form-item label="项目类型" prop="type_id">
                                         <Select v-model="formValidate.type_id" placeholder="项目类型" filterable>
-                                            <Option v-for="item in type_list" :value="item.key" :key="item.key" :label="item.name">
+                                            <Option v-for="item in type_list" :value="item.id" :key="item.id" :label="item.name">
                                                 <span> {{ item.name }}</span>
-                                                <span style="float:right;color:#ccc"> {{ item.desc }}</span>
+                                                <!--<span style="float:right;color:#ccc;height: 35px;display: flex;align-items: center;width: 100%;"> {{ item.memo }}</span>-->
                                             </Option>
                                         </Select>
                                     </Form-item>
@@ -72,6 +72,17 @@
                                     </Form-item>
                                 </i-col>
                                 <i-col span="12">
+                                    <Form-item label="项目公开性" prop="access_control_type">
+                                        <Select v-model="formValidate.access_control_type" placeholder="项目公开性" filterable>
+                                            <Option value="open" label="公开"></Option>
+                                            <Option value="private" label="私有"></Option>
+
+                                        </Select>
+                                    </Form-item>
+                                </i-col>
+                            </Row>
+                            <Row>
+                                <i-col span="24">
                                     <Form-item label="详细描述" prop="project_desc">
                                         <Input v-model="formValidate.project_desc" placeholder="详细描述" type="textarea"/>
                                     </Form-item>
@@ -244,6 +255,7 @@
         formValidate: {
           project_id: this.project_id,
           name: '',
+          access_control_type: 'open',
           level_id: 0,
           ticket: 0,
           type_id: 0,
@@ -297,6 +309,7 @@
             app.project = res.data
             app.$emit('on-update', app.project)
             app.formValidate.name = res.data.name
+            app.formValidate.access_control_type = res.data.access_control_type
             app.formValidate.status = res.data.status
             app.formValidate.level_id = res.data.level_id
             app.formValidate.ticket = res.data.ticket
@@ -342,9 +355,9 @@
       getTypeList() {
         let app = this
         utils.sendAjax({
-          url: 'Project_Project.getProjectTypeList',
+          url: 'Project_ProjectType.getList',
           success: function (res) {
-            app.type_list = res.data
+            app.type_list = res.data.list
           }
         });
       },
