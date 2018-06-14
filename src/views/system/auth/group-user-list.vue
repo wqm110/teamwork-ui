@@ -5,12 +5,15 @@
             <div class="data-content">
                 <div class="table-edit">
                     <div class="left-actions">
-                        <Button type="ghost" shape="circle" icon="arrow-return-left" @click="goPage('/system/auth_group/list')">
+                        <Button type="ghost" shape="circle" icon="arrow-return-left"
+                                @click="$router.push('/system/auth_group/list')">
                             返回
                         </Button>
                     </div>
                     <div class="right-actions">
-                        <Button @click="remove_model = true" type="ghost" shape="circle" :disabled="select_users.length <= 0">移除</Button>
+                        <Button @click="remove_model = true" type="ghost" shape="circle"
+                                :disabled="select_users.length <= 0">移除
+                        </Button>
                         <div class="search-input">
                             <Input v-model="keyword" icon="ios-search-strong" placeholder="搜索"/>
                         </div>
@@ -45,7 +48,7 @@
                 title="操作提示">
             <p>确认移除当前选中的用户吗？移除后该用户将不再获得此用户组所有权限 </p>
             <div slot="footer">
-                <Button type="text"  @click="remove_model = false">取消</Button>
+                <Button type="text" @click="remove_model = false">取消</Button>
                 <Button type="warning" :loading="send_loading" @click="removeConfirm">移除</Button>
             </div>
         </Modal>
@@ -56,160 +59,134 @@
     </div>
 </template>
 <script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../assets/js/utils'
-  import * as dateTime from '../../../assets/js/date_time'
-  import $ from 'jquery'
-  import _ from 'lodash'
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {getGroupUserList, removeGroupUser} from "@/api/system";
+    import * as utils from '../../../assets/js/utils'
+    import * as dateTime from '../../../assets/js/date_time'
+    import $ from 'jquery'
+    import _ from 'lodash'
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        remove_model: false,
-        select_users: [],
-        choose_user_id: 0,
-        choose_user_index: 0,
-        show_menu: false,
-        send_loading: false,
-        member_loading: false,
-        page_size: 10,
-        page_num: 1,
-        keyword: '',
-        loading: true,
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '用户编号',
-            key: 'account',
-            render: (h, params) => {
-              return h('strong', params.row.account)
-            }
-          },
-          {
-            title: '用户昵称',
-            key: 'realname'
-          },
-          {
-            title: '登录时间',
-            key: 'last',
-            render: (h, params) => {
-              return h('span', dateTime.format_date(params.row.last))
-            }
-          },
-          {
-            title: '登录IP',
-            key: 'ip',
-          },
-        ],
-        user_list: [],
-        userCount: 0,
-      }
-    },
-    watch: {
-      keyword: function (newQuestion) {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getUserList()
-        }
-      }
-    },
-    created: function () {
-      this.getUserList()
-    },
-    methods: {
-      getUserList: function () {
-        let app = this
-        app.loading = true
-        utils.sendAjax({
-          url: 'System_AuthGroup.getGroupUserList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.keyword,
-            id: this.$route.params.id
-          },
-          success: function (res) {
-            app.loading = false
-            app.user_list = res.data.list
-            app.userCount = Number(res.data.count)
-          }
-        });
-      },
-      removeConfirm (){
-        this.removeItem()
-      },
-      removeItem(){
-        let app = this
-        app.send_loading = true
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'System_AuthGroup.removeGroupUser',
-          data: {
-            ids: JSON.stringify(app.select_users),
-            group_id: this.$route.params.id,
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.remove_model = false
-            if(res.ret == 200){
-              app.$Message.success('移除成功');
-              app.getUserList()
-            }else{
-              app.$Message.warning(res.msg);
-            }
-          },
-          fail: function () {
-            app.send_loading = false;
-          }
-        });
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getUserList()
+    export default {
+        components: {
+            WrapperContent,
         },
-        // 这是我们为用户停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_users = []
-        $.each(selection, function (k, v) {
-          app.select_users.push(v.id)
-        });
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getUserList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getUserList()
-      },
-      reloadList() {
-        this.getUserList(1, this.page_size)
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
+        data() {
+            return {
+                self: this,
+                remove_model: false,
+                select_users: [],
+                choose_user_id: 0,
+                choose_user_index: 0,
+                show_menu: false,
+                send_loading: false,
+                member_loading: false,
+                page_size: 10,
+                page_num: 1,
+                keyword: '',
+                loading: true,
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
+                    },
+                    {
+                        title: '用户编号',
+                        key: 'account',
+                        render: (h, params) => {
+                            return h('strong', params.row.account)
+                        }
+                    },
+                    {
+                        title: '用户昵称',
+                        key: 'realname'
+                    },
+                    {
+                        title: '登录时间',
+                        key: 'last',
+                        render: (h, params) => {
+                            return h('span', dateTime.format_date(params.row.last))
+                        }
+                    },
+                    {
+                        title: '登录IP',
+                        key: 'ip',
+                    },
+                ],
+                user_list: [],
+                userCount: 0,
+            }
+        },
+        watch: {
+            keyword: function (newQuestion) {
+                this.search()
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getUserList()
+                }
+            }
+        },
+        created: function () {
+            this.getUserList()
+        },
+        methods: {
+            getUserList: function () {
+                let app = this;
+                app.loading = true;
+                getGroupUserList(this.$route.params.id, this.page_size, this.page_num, this.keyword).then(res => {
+                    app.loading = false;
+                    app.user_list = res.data.list;
+                    app.userCount = Number(res.data.count)
 
-  }
+                });
+            },
+            removeConfirm() {
+                this.removeItem()
+            },
+            removeItem() {
+                let app = this;
+                app.send_loading = true;
+                removeGroupUser(this.$route.params.id, JSON.stringify(app.select_users)).then(res => {
+                    app.send_loading = false;
+                    app.remove_model = false;
+                    if (res.ret == 200) {
+                        app.$Message.success('移除成功');
+                        app.getUserList()
+                    } else {
+                        app.$Message.warning(res.msg);
+                    }
+                });
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getUserList()
+                },
+                // 这是我们为用户停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_users = [];
+                $.each(selection, function (k, v) {
+                    app.select_users.push(v.id)
+                });
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getUserList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getUserList()
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            }
+        }
+    }
 </script>
 <style>
     .name-link {

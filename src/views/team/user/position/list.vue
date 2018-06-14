@@ -4,7 +4,8 @@
             <div class="data-content">
                 <div class="table-edit">
                     <div class="left-actions">
-                        <Button permission="Team_Team.addTeam" @click="form_modal = !form_modal,form_action = 'add'" type="primary"
+                        <Button permission="Team_Team.addTeam" @click="form_modal = !form_modal,form_action = 'add'"
+                                type="primary"
                                 shape="circle" icon="plus">添加职位
                         </Button>
                     </div>
@@ -89,267 +90,235 @@
 <style>
 
 </style>
-<script type="es6">
-  import WrapperContent from '../../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../../assets/js/utils'
-  import $ from 'jquery'
-  import _ from 'lodash'
-  import {sendAjax} from "../../../../assets/js/utils";
+<script>
+    import WrapperContent from '@/components/wrapper-content.vue'
+    import {getPositionList,doPosition,getPositionInfo,delPosition} from "@/api/user";
+    import $ from 'jquery'
+    import _ from 'lodash'
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        del_model: false,
-        form_modal: false,
-        select_positions: [],
-        send_loading: false,
-        page_size: 10,
-        page_num: 1,
-        keyword: '',
-        loading: true,
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '职位名称',
-            key: 'position_name',
-            sortable: true,
-            render: (h, params) => {
-              return h('router-link', {
-                attrs: {
-                  to: '/team/user/position/detail/' + params.row.id
-                }
-              }, params.row.position_name);
-            }
-          },
-          {
-            title: '英文名称',
-            key: 'eng_name',
-          },
-          {
-            title: '排序',
-            key: 'sort',
-            sortable: true
-          },
-          {
-            title: '操作',
-            key: 'action',
-            align: 'center',
-            render: (h, params) => {
-              return h('div',[
-                h('Tooltip',{
-                  props: {
-                    content: '编辑',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'compose',
-                      size: '16'
+    export default {
+        components: {
+            WrapperContent,
+        },
+        data() {
+            return {
+                self: this,
+                del_model: false,
+                form_modal: false,
+                select_positions: [],
+                send_loading: false,
+                page_size: 10,
+                page_num: 1,
+                keyword: '',
+                loading: true,
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
                     },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.id)
-                      }
+                    {
+                        title: '职位名称',
+                        key: 'position_name',
+                        sortable: true,
+                        render: (h, params) => {
+                            return h('router-link', {
+                                attrs: {
+                                    to: '/team/user/position/detail/' + params.row.id
+                                }
+                            }, params.row.position_name);
+                        }
+                    },
+                    {
+                        title: '英文名称',
+                        key: 'eng_name',
+                    },
+                    {
+                        title: '排序',
+                        key: 'sort',
+                        sortable: true
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        align: 'center',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Tooltip', {
+                                    props: {
+                                        content: '编辑',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'compose',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.id)
+                                            }
+                                        }
+                                    })
+                                ])
+                            ])
+                        }
                     }
-                  })
-                ])
-              ])
-            }
-          }
-        ],
-        team_list: [],
-        teamCount: 0,
-        form_action: 'add',
-        form_title: '添加新职位',
-        form_url: 'User_Position.addPosition',
-        form_submit: '添加',
-        formValidate: {
-          position_id: 0,
-          position_name: '',
-          eng_name: '',
-          sort: '',
-          position_desc: '',
-        },
-        ruleValidate: {
-          position_name: [
-            {required: true, message: '中文名称不能为空', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    watch: {
-      keyword: function (newQuestion) {
-        this.search()
-      },
-      form_action: function (value) {
-        if(value == 'add'){
-          this.form_title = '添加新职位'
-          this.form_submit = '添加'
-          this.form_url = 'User_Position.addPosition'
-        }else{
-          this.form_title = '编辑职位'
-          this.form_submit = '保存'
-          this.form_url = 'User_Position.editPosition'
-        }
-      },
-      form_modal: function (value) {
-        if(value === false) {
-          this.formValidate = {
-            position_id: 0,
-            position_name: '',
-            eng_name: '',
-            sort: '',
-            position_desc: '',
-          }
-        }
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-      }
-    },
-    created: function () {
-      this.getList()
-    },
-    methods: {
-      getList() {
-        let app = this
-        app.loading = true
-        utils.sendAjax({
-          url: 'User_Position.getList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.keyword
-          },
-          success: function (res) {
-            app.loading = false
-            app.team_list = res.data.list
-            app.teamCount = Number(res.data.count)
-          }
-        });
-      },
-      getInfo(){
-        let app = this
-        sendAjax({
-          url: 'User_Position.getInfo',
-          data: {position_id: app.formValidate.position_id},
-          success: function (res) {
-            if (res.data) {
-              app.formValidate.position_name = res.data.position_name
-              app.formValidate.eng_name = res.data.eng_name
-              app.formValidate.position_desc = res.data.position_desc
-              app.formValidate.sort = res.data.sort
-            }
-          }
-        });
-      },
-      editItem (id){
-        this.formValidate.position_id = id
-        this.getInfo()
-        this.form_modal = true
-        this.form_action = 'edit'
-      },
-      delConfirm() {
-        this.delItem()
-      },
-      delItem() {
-        let app = this
-        app.send_loading = true
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'User_Position.delPosition',
-          data: {
-            ids: JSON.stringify(app.select_positions),
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.del_model = false
-            if (res.ret == 200) {
-              app.$Message.success('删除成功');
-              app.getList()
-            } else {
-              app.$Message.warning(res.msg);
-            }
-          }
-        });
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
-        },
-        // 这是我们为职位停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_positions = []
-        $.each(selection, function (k, v) {
-          app.select_positions.push(v.id)
-        });
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getList()
-      },
-      reloadList() {
-        this.getList(1, this.page_size)
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if (valid) {
-            let app = this
-            this.send_loading = true
-            let option = {
-              url: app.form_url, method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning({
-                    content: msg,
-                    duration: 5
-                  });
-                } else {
-                  app.form_modal = false
-                  app.$Message.success('操作成功')
-                  app.getList()
+                ],
+                team_list: [],
+                teamCount: 0,
+                form_action: 'add',
+                form_title: '添加新职位',
+                form_url: 'add',
+                form_submit: '添加',
+                formValidate: {
+                    position_id: 0,
+                    position_name: '',
+                    eng_name: '',
+                    sort: '',
+                    position_desc: '',
+                },
+                ruleValidate: {
+                    position_name: [
+                        {required: true, message: '中文名称不能为空', trigger: 'blur'}
+                    ],
                 }
-                app.send_loading = false;
-              }, fail: function (res) {
-                app.send_loading = false;
-              }
             }
-            sendAjax(option)
-          }
-        })
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
-
-  };
+        },
+        watch: {
+            keyword: function (newQuestion) {
+                this.search()
+            },
+            form_action: function (value) {
+                if (value === 'add') {
+                    this.form_title = '添加新职位';
+                    this.form_submit = '添加';
+                    this.form_url = 'add'
+                } else {
+                    this.form_title = '编辑职位';
+                    this.form_submit = '保存';
+                    this.form_url = 'edit'
+                }
+            },
+            form_modal: function (value) {
+                if (value === false) {
+                    this.formValidate = {
+                        position_id: 0,
+                        position_name: '',
+                        eng_name: '',
+                        sort: '',
+                        position_desc: '',
+                    }
+                }
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getList()
+                }
+            }
+        },
+        created: function () {
+            this.getList()
+        },
+        methods: {
+            getList() {
+                let app = this;
+                app.loading = true;
+                getPositionList(this.page_size,this.page_num,this.keyword).then(res => {
+                    app.loading = false;
+                    app.team_list = res.data.list;
+                    app.teamCount = Number(res.data.count)
+                });
+            },
+            getInfo() {
+                let app = this;
+                getPositionInfo(app.formValidate.position_id).then(res=>{
+                    if (res.data) {
+                        app.formValidate.position_name = res.data.position_name;
+                        app.formValidate.eng_name = res.data.eng_name;
+                        app.formValidate.position_desc = res.data.position_desc;
+                        app.formValidate.sort = res.data.sort
+                    }
+                });
+            },
+            editItem(id) {
+                this.formValidate.position_id = id;
+                this.getInfo();
+                this.form_modal = true;
+                this.form_action = 'edit'
+            },
+            delConfirm() {
+                this.delItem()
+            },
+            delItem() {
+                let app = this;
+                app.send_loading = true;
+                delPosition(JSON.stringify(app.select_positions)).then(res => {
+                    app.send_loading = false;
+                    app.del_model = false;
+                    if (res.ret === 200) {
+                        app.$Message.success('删除成功');
+                        app.getList()
+                    } else {
+                        app.$Message.warning(res.msg);
+                    }
+                });
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                // 这是我们为职位停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_positions = [];
+                $.each(selection, function (k, v) {
+                    app.select_positions.push(v.id)
+                });
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getList()
+            },
+            reloadList() {
+                this.getList(1, this.page_size)
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.send_loading = true;
+                        doPosition(app.form_url,app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning({
+                                    content: msg,
+                                    duration: 5
+                                });
+                            } else {
+                                app.form_modal = false;
+                                app.$Message.success('操作成功');
+                                app.getList()
+                            }
+                            app.send_loading = false;
+                        });
+                    }
+                })
+            },
+        }
+    };
 </script>

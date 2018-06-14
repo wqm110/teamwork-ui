@@ -18,7 +18,9 @@
                         </FormItem>
                         <FormItem label="模块" prop="model">
                             <Select v-model="formValidate.model" placeholder="请选择" style="width: 500px">
-                                <Option :value="model.name" v-for="(model,index) in menu_model" :key="index">{{ model.title }}</Option>
+                                <Option :value="model.name" v-for="(model,index) in menu_model" :key="index">{{
+                                    model.title }}
+                                </Option>
                             </Select>
                         </FormItem>
                         <FormItem label="路径" prop="path">
@@ -34,7 +36,7 @@
                             {{ parent_title }}
                         </FormItem>
                         <FormItem label="描述" prop="desc">
-                            <Input v-model="formValidate.desc"  type="textarea" style="width: 500px"/>
+                            <Input v-model="formValidate.desc" type="textarea" style="width: 500px"/>
                         </FormItem>
                         <FormItem label="状态" prop="status">
                             <RadioGroup v-model="formValidate.status">
@@ -58,101 +60,91 @@
     </div>
 </template>
 <script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import {getStore, sendAjax} from '../../../assets/js/utils'
-  import $ from 'jquery'
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {getMenu,getAllMenuModelList,editMenu} from "@/api/system";
 
-  export default {
-    components: {
-      WrapperContent
-    },
-    data() {
-      return {
-        menu_model: [],
-        formValidate: {
-          id: 0,
-          title: '',
-          name: '',
-          path: '',
-          sort: 0,
-          icon: '',
-          pid: 0,
-          desc: '',
-          model: '',
-          status: 1,
+
+    export default {
+        components: {
+            WrapperContent
         },
-        parent_title: '',
-        model_list: ['user','system'],
-        sending: false,
-        ruleValidate: {
-          title: [
-            {required: true, message: '菜单标题不能为空', trigger: 'blur'}
-          ],
-          name: [
-            {required: true, message: '菜单名称不能为空', trigger: 'blur'}
-          ],
-          model: [
-            {required: true, message: '菜单模块不能为空', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    created (){
-      let app = this
-      sendAjax({
-        url: 'System_AuthMenu.getMenu',
-        data: {id: app.$route.params.id},
-        success: function (res) {
-          app.parent_title = res.data.parent_title
-          app.formValidate.id = res.data.id
-          app.formValidate.title = res.data.title
-          app.formValidate.name = res.data.name
-          app.formValidate.path = res.data.path
-          app.formValidate.sort = res.data.sort
-          app.formValidate.icon = res.data.icon
-          app.formValidate.pid = res.data.pid
-          app.formValidate.desc = res.data.menu_desc
-          app.formValidate.model = res.data.model
-          app.formValidate.status = res.data.status
-        }
-      });
-      app.$Loading.start()
-      sendAjax({
-        url: 'System_MenuModel.getAllList',
-        success: function (res) {
-          app.$Loading.finish()
-          app.menu_model = res.data.list
-        }
-      });
-    },
-    methods: {
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if(valid) {
-            let app = this
-            this.sending = true
-            let option = {
-              url: 'System_AuthMenu.editMenu', method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret
-                const msg = res.msg
-                if (code !== 200) {
-                  app.$Message.warning(msg)
-                } else {
-                  app.$store.state.list_reload = true
-                  app.$Message.success('编辑成功')
-                  app.$router.push({path:'/system/auth_menu/list'})
+        data() {
+            return {
+                menu_model: [],
+                formValidate: {
+                    id: 0,
+                    title: '',
+                    name: '',
+                    path: '',
+                    sort: 0,
+                    icon: '',
+                    pid: 0,
+                    desc: '',
+                    model: '',
+                    status: 1,
+                },
+                parent_title: '',
+                model_list: ['user', 'system'],
+                sending: false,
+                ruleValidate: {
+                    title: [
+                        {required: true, message: '菜单标题不能为空', trigger: 'blur'}
+                    ],
+                    name: [
+                        {required: true, message: '菜单名称不能为空', trigger: 'blur'}
+                    ],
+                    model: [
+                        {required: true, message: '菜单模块不能为空', trigger: 'blur'}
+                    ],
                 }
-                app.sending = false;
-              }, fail: function (res) {
-                app.sending = false;
-              }
             }
-            sendAjax(option)
-          }
-        })
-      },
+        },
+        created() {
+            let app = this;
+            getMenu(app.$route.params.id).then(res => {
+                app.parent_title = res.data.parent_title;
+                app.formValidate.id = res.data.id;
+                app.formValidate.title = res.data.title;
+                app.formValidate.name = res.data.name;
+                app.formValidate.path = res.data.path;
+                app.formValidate.sort = res.data.sort;
+                app.formValidate.icon = res.data.icon;
+                app.formValidate.pid = res.data.pid;
+                app.formValidate.desc = res.data.menu_desc;
+                app.formValidate.model = res.data.model;
+                app.formValidate.status = res.data.status
+
+            });
+            app.$Loading.start();
+            getAllMenuModelList().then(res => {
+                app.$Loading.finish();
+                app.menu_model = res.data.list
+
+            });
+        },
+        methods: {
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.sending = true;
+                        editMenu(app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg)
+                            } else {
+                                app.$store.state.list_reload = true;
+                                app.$Message.success('编辑成功');
+                                app.$router.push({path: '/system/auth_menu/list'})
+                            }
+                            app.sending = false;
+                        }).catch(res=>{
+                            app.sending = false;
+                        });
+                    }
+                })
+            },
+        }
     }
-  }
 </script>

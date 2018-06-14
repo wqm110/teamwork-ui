@@ -33,7 +33,9 @@
                                           @click.prevent.native="handleCheckAll">全选
                                 </Checkbox>
                             </div>
-                            <Checkbox-group style="width: 500px;margin-bottom: 15px;" v-model="formValidate.default_user_group_list" prop="default_user_group_list" @on-change="checkAllGroupChange">
+                            <Checkbox-group style="width: 500px;margin-bottom: 15px;"
+                                            v-model="formValidate.default_user_group_list"
+                                            prop="default_user_group_list" @on-change="checkAllGroupChange">
                                 <Checkbox :label="group.id" v-for="(group,index) in group_list" :key="index">
                                     {{ group.title }}
                                 </Checkbox>
@@ -51,137 +53,115 @@
         </wrapper-content>
     </div>
 </template>
-<script type="es6">
-  import WrapperContent from '../../../../components/wrapper-content.vue'
-  import {getStore, sendAjax} from '../../../../assets/js/utils'
-  import $ from 'jquery'
+<script>
+    import WrapperContent from '@/components/wrapper-content.vue'
+    import {getUserSetting, doUserSetting} from "@/api/user";
+    import {getAuthGroupList} from "@/api/system";
+    import $ from 'jquery'
 
-  export default {
-    components: {
-      WrapperContent
-    },
-    data() {
-      return {
-        indeterminate: true,
-        checkAll: false,
-        group_list: [],
-        formValidate: {
-          user_name_length_min: 3,
-          user_name_length_max: 6,
-          realname_length_min: 3,
-          realname_length_max: 6,
-          password_length_min: 6,
-          password_length_max: 18,
-          default_user_group_list: [],
+    export default {
+        components: {
+            WrapperContent
         },
-        sending: false,
-        ruleValidate: {
-          user_name_length_min: [
-            {required: true, message: '请输入用户名最小长度', trigger: 'blur'},
-          ],
-          user_name_length_max: [
-            {required: true,  message: '请输入用户名最大长度', trigger: 'blur'}
-          ],
-          realname_length_min: [
-            {required: true,  message: '请输入用户昵称最小长度', trigger: 'blur'}
-          ],
-          realname_length_max: [
-            {required: true,  message: '请输入用户昵称最大长度', trigger: 'blur'}
-          ],
-          password_length_min: [
-            {required: true,  message: '请输入用户密码最小长度', trigger: 'blur'}
-          ],
-          password_length_max: [
-            {required: true,  message: '请输入用户昵称最大长度', trigger: 'blur'}
-          ],
-          default_user_group_list: [
-            {required: true, type: 'array', min: 1, message: '请至少选择一个默认用户组', trigger: 'change'}
-          ],
-        }
-      }
-    },
-    created (){
-      let app = this
-      sendAjax({
-        url: 'User_UserSetting_Setting.getSetting',
-        data: {
-          name: 'base_setting'
-        },
-        success: function (res) {
-          if(res.data) {
-            app.formValidate = res.data
-          }
-        }
-      });
-      sendAjax({
-        url: 'System_AuthGroup.GetList',
-        data: {
-          page_size: 100,
-          page_num: 1
-        },
-        success: function (res) {
-          app.group_list = res.data.list
-        }
-      });
-    },
-    methods: {
-      handleCheckAll() {
-        let app = this
-        if (this.indeterminate) {
-          this.checkAll = false;
-        } else {
-          this.checkAll = !this.checkAll;
-        }
-        this.indeterminate = false;
-
-        this.formValidate.default_user_group_list = []
-        if (this.checkAll) {
-          $.each(this.group_list, function (k, v) {
-            app.formValidate.default_user_group_list.push(v.id)
-          });
-        }
-      },
-      checkAllGroupChange() {
-        if (this.formValidate.default_user_group_list.length === this.group_list.length) {
-          this.indeterminate = false;
-          this.checkAll = true;
-        } else if (this.formValidate.default_user_group_list.length > 0) {
-          this.indeterminate = true;
-          this.checkAll = false;
-        } else {
-          this.indeterminate = false;
-          this.checkAll = false;
-        }
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if(valid) {
-            let app = this
-            this.sending = true
-            let option = {
-              url: 'User_UserSetting_Setting.doSetting', method: 'post',
-              data: {
-                name: 'base_setting',
-                value: JSON.stringify(app.formValidate)
-              },
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning(msg);
-                } else {
-                  app.$store.state.list_reload = true
-                  app.$Message.success('保存成功')
+        data() {
+            return {
+                indeterminate: true,
+                checkAll: false,
+                group_list: [],
+                formValidate: {
+                    user_name_length_min: 3,
+                    user_name_length_max: 6,
+                    realname_length_min: 3,
+                    realname_length_max: 6,
+                    password_length_min: 6,
+                    password_length_max: 18,
+                    default_user_group_list: [],
+                },
+                sending: false,
+                ruleValidate: {
+                    user_name_length_min: [
+                        {required: true, message: '请输入用户名最小长度', trigger: 'blur'},
+                    ],
+                    user_name_length_max: [
+                        {required: true, message: '请输入用户名最大长度', trigger: 'blur'}
+                    ],
+                    realname_length_min: [
+                        {required: true, message: '请输入用户昵称最小长度', trigger: 'blur'}
+                    ],
+                    realname_length_max: [
+                        {required: true, message: '请输入用户昵称最大长度', trigger: 'blur'}
+                    ],
+                    password_length_min: [
+                        {required: true, message: '请输入用户密码最小长度', trigger: 'blur'}
+                    ],
+                    password_length_max: [
+                        {required: true, message: '请输入用户昵称最大长度', trigger: 'blur'}
+                    ],
+                    default_user_group_list: [
+                        {required: true, type: 'array', min: 1, message: '请至少选择一个默认用户组', trigger: 'change'}
+                    ],
                 }
-                app.sending = false;
-              }, fail: function (res) {
-                app.sending = false;
-              }
             }
-            sendAjax(option)
-          }
-        })
-      },
+        },
+        created() {
+            let app = this;
+            getUserSetting('base_setting').then(res => {
+                if (res.data) {
+                    app.formValidate = res.data
+                }
+            });
+            getAuthGroupList(100,1).then(res => {
+                app.group_list = res.data.list
+            });
+        },
+        methods: {
+            handleCheckAll() {
+                let app = this;
+                if (this.indeterminate) {
+                    this.checkAll = false;
+                } else {
+                    this.checkAll = !this.checkAll;
+                }
+                this.indeterminate = false;
+
+                this.formValidate.default_user_group_list = [];
+                if (this.checkAll) {
+                    $.each(this.group_list, function (k, v) {
+                        app.formValidate.default_user_group_list.push(v.id)
+                    });
+                }
+            },
+            checkAllGroupChange() {
+                if (this.formValidate.default_user_group_list.length === this.group_list.length) {
+                    this.indeterminate = false;
+                    this.checkAll = true;
+                } else if (this.formValidate.default_user_group_list.length > 0) {
+                    this.indeterminate = true;
+                    this.checkAll = false;
+                } else {
+                    this.indeterminate = false;
+                    this.checkAll = false;
+                }
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.sending = true;
+                        doUserSetting('base_setting', JSON.stringify(app.formValidate)).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg);
+                            } else {
+                                app.$store.state.list_reload = true;
+                                app.$Message.success('保存成功')
+                            }
+                            app.sending = false;
+                        });
+                    }
+                })
+            }
+        }
     }
-  }
 </script>

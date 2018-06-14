@@ -3,24 +3,36 @@
         <wrapper-content pageTitle="我的项目">
             <div slot="page-action" class="page-action">
                 <div class="filter-content">
-                    <Button permission="Project_Project.exportTeamTimeProjectReport" type="dashed" icon="stats-bars" @click="exportTeamTimeProject('week')">项目周报</Button>
-                    <Button permission="Project_Project.exportTeamTimeProjectReport" type="dashed" icon="stats-bars" @click="exportTeamTimeProject('month')">项目月报</Button>
+                    <Button permission="Project_Project.exportTeamTimeProjectReport" type="dashed" icon="stats-bars"
+                            @click="exportTeamTimeProject('week')">项目周报
+                    </Button>
+                    <Button permission="Project_Project.exportTeamTimeProjectReport" type="dashed" icon="stats-bars"
+                            @click="exportTeamTimeProject('month')">项目月报
+                    </Button>
                 </div>
             </div>
             <div class="data-content">
                 <div class="table-edit">
                     <div class="left-actions">
-                        <Button permission="Project_Project.addProject" @click="form_modal = !form_modal,form_action = 'add'" type="primary"
+                        <Button permission="add"
+                                @click="form_modal = !form_modal,form_action = 'add'" type="primary"
                                 shape="circle" icon="plus">添加
                         </Button>
                     </div>
                     <div class="right-actions">
                         <ButtonGroup class="select m-r-xs">
-                            <Button shape="circle" type="ghost" :class="{'active' : project_state == -1}" @click="project_state = -1">全部</Button>
-                            <Button shape="circle" type="ghost" :class="{'active' : project_state == 2}" @click="project_state = 2">开发中</Button>
-                            <Button shape="circle" type="ghost" :class="{'active' : project_state == 5}" @click="project_state = 5">测试中</Button>
+                            <Button shape="circle" type="ghost" :class="{'active' : project_state == -1}"
+                                    @click="project_state = -1">全部
+                            </Button>
+                            <Button shape="circle" type="ghost" :class="{'active' : project_state == 2}"
+                                    @click="project_state = 2">开发中
+                            </Button>
+                            <Button shape="circle" type="ghost" :class="{'active' : project_state == 5}"
+                                    @click="project_state = 5">测试中
+                            </Button>
                         </ButtonGroup>
-                        <Button permission="Project_Project.delProject" @click="del_model = true" type="ghost" shape="circle"
+                        <Button permission="Project_Project.delProject" @click="del_model = true" type="ghost"
+                                shape="circle"
                                 :disabled="select_projects.length <= 0">删除
                         </Button>
                         <div class="search-input">
@@ -48,11 +60,12 @@
                         </Poptip>
                     </div>
                 </div>
-                <Table :loading="loading" border :columns="columns" :data="project_list" :show-header="false" class="no-border-table"
+                <Table :loading="loading" border :columns="columns" :data="project_list" :show-header="false"
+                       class="no-border-table"
                        @on-selection-change="selectItem"></Table>
-                <Page v-if="teamCount > 0" :total="teamCount" :current="page_num" @on-change="changePage"
+                <Page v-if="team_count > 0" :total="team_count" :current="page_num" @on-change="changePage"
                       @on-page-size-change="changePageSize" size="small" show-total show-sizer class="table-page">
-                    <slot class="total">共 {{ teamCount }} 条</slot>
+                    <slot class="total">共 {{ team_count }} 条</slot>
                 </Page>
             </div>
         </wrapper-content>
@@ -105,10 +118,12 @@
                     <Input v-model="formValidate.name" placeholder="项目名称" type="text"/>
                 </Form-item>
                 <Form-item prop="end">
-                    <DatePicker :value="formValidate.end" @on-change="changeEndDate" :editable="false" type="date" placeholder="截止日期" style="width: 100%"></DatePicker>
+                    <DatePicker :value="formValidate.end" @on-change="changeEndDate" :editable="false" type="date"
+                                placeholder="截止日期" style="width: 100%"></DatePicker>
                 </Form-item>
                 <Form-item prop="prepayDate">
-                    <DatePicker :value="formValidate.prepayDate" @on-change="changePrepayDate" :editable="false" type="date" placeholder="预付日期" style="width: 100%"></DatePicker>
+                    <DatePicker :value="formValidate.prepayDate" @on-change="changePrepayDate" :editable="false"
+                                type="date" placeholder="预付日期" style="width: 100%"></DatePicker>
                 </Form-item>
                 <Form-item prop="type_id">
                     <Select v-model="formValidate.type_id" placeholder="项目类型" filterable>
@@ -171,494 +186,437 @@
 <style>
 
 </style>
-<script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../assets/js/utils'
-  import $ from 'jquery'
-  import _ from 'lodash'
-  import {sendAjax} from "../../../assets/js/utils";
+<script>
+    import WrapperContent from '@/components/wrapper-content'
+    import * as utils from '@/assets/js/utils'
+    import $ from 'jquery'
+    import _ from 'lodash'
+    import {
+        getListForUser,
+        getInfo,
+        getLevelList,
+        getTicketList,
+        getTypeList,
+        addProjectUser,
+        selectProjectUser,
+        doProject,
+        delProject
+    } from "@/api/project";
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        level_list: [],
-        ticket_list: [],
-        type_list: [],
-        current_project_id: 0,
-        project_user_list: [],
-        user_keyword: '',
-        user_modal: false,
-        data_loading: false,
-        del_model: false,
-        form_modal: false,
-        select_projects: [],
-        send_loading: false,
-        page_size: 10,
-        page_num: 1,
-        keyword: '',
-        loading: false,
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '项目名称',
-            key: 'name',
-            // width: 500,
-            sortable: true,
-            render: (h, params) => {
-              return h('router-link', {
-                attrs: {
-                  to: '/project/task/' + params.row.project_id
-                }
-              }, '（' + params.row.level_name + '）' + params.row.name);
-            }
-          },
-          {
-            title: '业务经理',
-            key: 'state',
-            width: 150,
-            render: (h,params) => {
-              return h('span',{
-                style:{
-                    color: '#ff9900'
-                }
-              },params.row.business_info.realname)
-            }
-          },
-          {
-            title: '项目状态',
-            key: 'state',
-            width: 100,
-            render: (h,params) => {
-              let state_class = 'table-state'
-              switch (params.row.state) {
-                case '未安排':
-                  state_class += ' default'
-                  break;
-                case '开发中':
-                  state_class += ' success'
-                  break;
-                case '测试中':
-                  state_class += ' warning'
-                  break;
-                case '已搁置':
-                  state_class += ' danger'
-                  break;
-                default :
-                  state_class += ' info'
-              }
-              return h('span',{
-                class: state_class
-              },params.row.state)
-            }
-          },
-          {
-            title: '项目进度',
-            key: 'schedule',
-            width: 200,
-            render: (h,params) => {
-              return h('Progress',{
-                props:{
-                  'stroke-width': 5,
-                  percent: Number(params.row.schedule)
-                }
-              })
-            }
-          },
-          {
-            title: '截止-预交',
-            key: 'end',
-            width: 200,
-            render: (h,params) => {
-              let prepayDate = ''
-              if( params.row.prepayDate != null){
-                prepayDate = ' - ' + params.row.prepayDate
-              }
-              //params.row.end +  prepayDate
-              return h('div',{
-                class: 'muted'
-              },[
-                h('p',{},'截止时间 - 预交时间'),
-                h('p',{},params.row.end + prepayDate),
-              ])
-            }
-          },
-          {
-            title: ' ',
-            key: 'action',
-            align: 'center',
-            width: 150,
-            render: (h, params) => {
-              return h('div',[
-                h('Tooltip',{
-                  props: {
-                    content: '添加成员',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'android-person-add',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                           this.selectProjectUser(params.row.project_id)
-                      }
-                    }
-                  })
-                ]),
-                h('Tooltip',{
-                  props: {
-                    content: '项目设置',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'ios-gear',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.project_id)
-                      }
-                    }
-                  })
-                ]),
-                h('Tooltip',{
-                  props: {
-                    content: '项目归档',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'android-bookmark',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.project_id)
-                      }
-                    }
-                  })
-                ])
-              ])
-            }
-          }
-        ],
-        project_state: -1,
-        project_list: [],
-        teamCount: 0,
-        form_action: 'add',
-        form_title: '添加新项目',
-        form_url: 'Project_Project.addProject',
-        form_submit: '添加',
-        formValidate: {
-          project_id: 0,
-          access_control_type: 'open',
-          name: '',
-          level_id: 0,
-          ticket: 0,
-          type_id: 0,
-          project_desc: '',
-          end: '',
-          prepayDate: '',
+    export default {
+        components: {
+            WrapperContent,
         },
-        ruleValidate: {
-          name: [
-            {required: true, message: '写上项目名称吧', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    watch: {
-      user_keyword: function () {
-        this.user_search()
-      },
-      keyword: function () {
-        this.search()
-      },
-      form_action: function (value) {
-        if(value == 'add'){
-          this.form_title = '添加新项目'
-          this.form_submit = '添加'
-          this.form_url = 'Project_Project.addProject'
-        }else{
-          this.form_title = '编辑项目'
-          this.form_submit = '保存'
-          this.form_url = 'Project_Project.editProject'
-        }
-      },
-      form_modal: function (value) {
-        if(value === false) {
-          this.formValidate = {
-            project_id: 0,
-            access_control_type: 'open',
-            name: '',
-            level_id: 0,
-            ticket: 0,
-            type_id: 0,
-            project_desc: '',
-            end: '',
-            prepayDate: '',
-          }
-        }
-      },
-      project_state: function (value) {
-        this.getList()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-      }
-    },
-    created: function () {
-      let app = this
-      this.getList()
-      this.getLevelList()
-      this.getTicketList()
-      this.getTypeList()
-      app.$options.sockets.action_synchronize = (data) => {
-        const push_data = utils.getPushData(data)
-        app.getList()
-        console.log('myProject_action_synchronize')
-      }
-    },
-    methods: {
-      getList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.getListForUser',
-          data: {
-            state: this.project_state,
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.keyword
-          },
-          success: function (res) {
-            app.project_list = res.data.list
-            app.teamCount = Number(res.data.count)
-          }
-        });
-      },
-      getInfo(){
-        let app = this
-        sendAjax({
-          url: 'Project_Project.getInfo',
-          data: {project_id: app.formValidate.project_id},
-          success: function (res) {
-            if (res.ret != 200) {
-              app.$Message.warning(res.msg);
-              window.history.go(-1)
-            }else{
-              if (res.data) {
-                app.formValidate.name = res.data.name
-                app.formValidate.access_control_type = res.data.access_control_type
-                app.formValidate.level_id = res.data.level_id
-                app.formValidate.ticket = res.data.ticket
-                app.formValidate.type_id = res.data.type_id
-                app.formValidate.end = res.data.end
-                app.formValidate.prepayDate = res.data.prepayDate
-                app.formValidate.project_desc = res.data.project_desc
-              }
+        data() {
+            return {
+                self: this,
+                level_list: [],
+                ticket_list: [],
+                type_list: [],
+                current_project_id: 0,
+                project_user_list: [],
+                user_keyword: '',
+                user_modal: false,
+                data_loading: false,
+                del_model: false,
+                form_modal: false,
+                select_projects: [],
+                send_loading: false,
+                page_size: 10,
+                page_num: 1,
+                keyword: '',
+                loading: false,
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
+                    },
+                    {
+                        title: '项目名称',
+                        key: 'name',
+                        // width: 500,
+                        sortable: true,
+                        render: (h, params) => {
+                            return h('router-link', {
+                                attrs: {
+                                    to: '/project/task/' + params.row.project_id
+                                }
+                            }, '（' + params.row.level_name + '）' + params.row.name);
+                        }
+                    },
+                    {
+                        title: '业务经理',
+                        key: 'state',
+                        width: 150,
+                        render: (h, params) => {
+                            return h('span', {
+                                style: {
+                                    color: '#ff9900'
+                                }
+                            }, params.row.business_info.realname)
+                        }
+                    },
+                    {
+                        title: '项目状态',
+                        key: 'state',
+                        width: 100,
+                        render: (h, params) => {
+                            let state_class = 'table-state'
+                            switch (params.row.state) {
+                                case '未安排':
+                                    state_class += ' default'
+                                    break;
+                                case '开发中':
+                                    state_class += ' success'
+                                    break;
+                                case '测试中':
+                                    state_class += ' warning'
+                                    break;
+                                case '已搁置':
+                                    state_class += ' danger'
+                                    break;
+                                default :
+                                    state_class += ' info'
+                            }
+                            return h('span', {
+                                class: state_class
+                            }, params.row.state)
+                        }
+                    },
+                    {
+                        title: '项目进度',
+                        key: 'schedule',
+                        width: 200,
+                        render: (h, params) => {
+                            return h('Progress', {
+                                props: {
+                                    'stroke-width': 5,
+                                    percent: Number(params.row.schedule)
+                                }
+                            })
+                        }
+                    },
+                    {
+                        title: '截止-预交',
+                        key: 'end',
+                        width: 200,
+                        render: (h, params) => {
+                            let prepayDate = ''
+                            if (params.row.prepayDate != null) {
+                                prepayDate = ' - ' + params.row.prepayDate
+                            }
+                            //params.row.end +  prepayDate
+                            return h('div', {
+                                class: 'muted'
+                            }, [
+                                h('p', {}, '截止时间 - 预交时间'),
+                                h('p', {}, params.row.end + prepayDate),
+                            ])
+                        }
+                    },
+                    {
+                        title: ' ',
+                        key: 'action',
+                        align: 'center',
+                        width: 150,
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Tooltip', {
+                                    props: {
+                                        content: '添加成员',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'android-person-add',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.selectProjectUser(params.row.project_id)
+                                            }
+                                        }
+                                    })
+                                ]),
+                                h('Tooltip', {
+                                    props: {
+                                        content: '项目设置',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'ios-gear',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.project_id)
+                                            }
+                                        }
+                                    })
+                                ]),
+                                h('Tooltip', {
+                                    props: {
+                                        content: '项目归档',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'android-bookmark',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.project_id)
+                                            }
+                                        }
+                                    })
+                                ])
+                            ])
+                        }
+                    }
+                ],
+                project_state: -1,
+                project_list: [],
+                team_count: 0,
+                form_action: 'add',
+                form_title: '添加新项目',
+                form_url: 'add',
+                form_submit: '添加',
+                formValidate: {
+                    project_id: 0,
+                    access_control_type: 'open',
+                    name: '',
+                    level_id: 0,
+                    ticket: 0,
+                    type_id: 0,
+                    project_desc: '',
+                    end: '',
+                    prepayDate: '',
+                },
+                ruleValidate: {
+                    name: [
+                        {required: true, message: '写上项目名称吧', trigger: 'blur'}
+                    ],
+                }
             }
-          }
-        });
-      },
-      exportTeamTimeProject(time_type) {
-        let app = this
-        window.open(utils.getDirectUrl('Project_Project.exportTeamTimeProjectReport&token=' + utils.getStore('token') + '&time_type=' + time_type))
-      },
-      editItem (id){
-        this.formValidate.project_id = id
-        this.getInfo()
-        this.form_modal = true
-        this.form_action = 'edit'
-      },
-      delConfirm() {
-        this.delItem()
-      },
-      delItem() {
-        let app = this
-        app.send_loading = true
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'Project_Project.delProject',
-          data: {
-            ids: JSON.stringify(app.select_projects),
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.del_model = false
-            if (res.ret == 200) {
-              app.$Message.success('删除成功');
-              app.getList()
-            } else {
-              app.$Message.warning(res.msg);
-            }
-          }
-        });
-      },
-      selectProjectUser(project_id) {
-        this.current_project_id = project_id
-        this.user_modal = true
-        this.getProjectUser()
-      },
-      getProjectUser() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.selectProjectUser',
-          data: {
-            keyword: this.user_keyword,
-            project_id: this.current_project_id,
-          },
-          success: function (res) {
-            app.project_user_list = res.data.list
-          }
-        });
-      },
-      addProjectUser(user_id, index) {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.addProjectUser',
-          method: 'post',
-          data: {
-            user_id: user_id,
-            project_id: app.current_project_id,
-          },
-          success: function (res) {
-            const result = utils.showBack(res)
-            if (result) {
-              app.project_user_list[index].is_add = true
-            }
-          }
-        });
-      },
-      getLevelList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Level.GetList',
-          data: {
-            page_size: 50,
-            order: 'sort asc'
-          },
-          success: function (res) {
-            app.level_list = res.data.list
-          }
-        });
-      },
-      getTicketList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.getProjectTicketList',
-          success: function (res) {
-            app.ticket_list = res.data
-          }
-        });
-      },
-      getTypeList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_ProjectType.getList',
-          success: function (res) {
-            app.type_list = res.data.list
-          }
-        });
-      },
-      user_search: _.debounce(
-        function () {
-          if(this.project_user_list.length > 0){
-            this.page_num = 1
-            this.getProjectUser()
-          }
         },
-        500
-      ),
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
-        },
-        // 这是我们为等级停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_projects = []
-        $.each(selection, function (k, v) {
-          app.select_projects.push(v.project_id)
-        });
-      },
-      changeEndDate(date){
-        this.formValidate.end = date
-      },
-      changePrepayDate(date){
-        this.formValidate.prepayDate = date
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getList()
-      },
-      reloadList() {
-        this.getList(1, this.page_size)
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if (valid) {
-            let app = this
-            this.send_loading = true
-            let option = {
-              url: app.form_url, method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning({
-                    content: msg,
-                    duration: 5
-                  });
+        watch: {
+            user_keyword: function () {
+                this.user_search()
+            },
+            keyword: function () {
+                this.search()
+            },
+            form_action: function (value) {
+                if (value === 'add') {
+                    this.form_title = '添加新项目';
+                    this.form_submit = '添加';
+                    this.form_url = 'add';
                 } else {
-                  app.form_modal = false
-                  app.$Message.success('操作成功')
-                  app.getList()
+                    this.form_title = '编辑项目';
+                    this.form_submit = '保存';
+                    this.form_url = 'edit';
                 }
-                app.send_loading = false;
-              }, fail: function (res) {
-                app.send_loading = false;
-              }
+            },
+            form_modal: function (value) {
+                if (value === false) {
+                    this.formValidate = {
+                        project_id: 0,
+                        access_control_type: 'open',
+                        name: '',
+                        level_id: 0,
+                        ticket: 0,
+                        type_id: 0,
+                        project_desc: '',
+                        end: '',
+                        prepayDate: '',
+                    }
+                }
+            },
+            project_state: function (value) {
+                this.getList()
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getList()
+                }
             }
-            sendAjax(option)
-          }
-        })
-      },
-      goPage(url) {
-        this.$router.push(url)
-      },
+        },
+        created: function () {
+            let app = this;
+            this.getList();
+            this.getLevelList();
+            this.getTicketList();
+            this.getTypeList()
+            // app.$options.sockets.action_synchronize = (data) => {
+            //     const push_data = utils.getPushData(data)
+            //     app.getList()
+            //     console.log('myProject_action_synchronize')
+            // }
+        },
+        methods: {
+            getList() {
+                let app = this;
+                getListForUser(app.project_state, app.page_size, app.page_num, app.keyword).then(res => {
+                    app.project_list = res.data.list;
+                    app.team_count = Number(res.data.count)
+                });
+            },
+            getInfo() {
+                let app = this;
+                getInfo(app.formValidate.project_id).then(res => {
+                    app.formValidate = {
+                        project_id: res.data.id,
+                        name: res.data.name,
+                        level_id: res.data.level_id,
+                        ticket: res.data.ticket,
+                        type_id: res.data.type_id,
+                        end: res.data.end,
+                        prepayDate: res.data.prepayDate,
+                        project_desc: res.data.project_desc,
 
-    },
+                    };
+                });
+            },
+            exportTeamTimeProject(time_type) {
+                let app = this;
+                window.open(utils.getDirectUrl('Project_Project.exportTeamTimeProjectReport&token=' + utils.getStore('token') + '&time_type=' + time_type))
+            },
+            editItem(id) {
+                this.formValidate.project_id = id;
+                this.getInfo();
+                this.form_modal = true;
+                this.form_action = 'edit'
+            },
+            delConfirm() {
+                this.delItem()
+            },
+            delItem() {
+                let app = this;
+                app.send_loading = true;
+                delProject(JSON.stringify(app.select_projects)).then(res => {
+                    app.send_loading = false;
+                    app.del_model = false;
+                    if (res.ret === 200) {
+                        app.$Message.success('删除成功');
+                        app.getList()
+                    }
+                });
+            },
+            selectProjectUser(project_id) {
+                this.current_project_id = project_id;
+                this.user_modal = true;
+                this.getProjectUser()
+            },
+            getProjectUser() {
+                let app = this;
+                selectProjectUser(app.current_project_id, app.user_keyword).then(res => {
+                    app.project_user_list = res.data.list
+                });
+            },
+            addProjectUser(user_id, index) {
+                let app = this;
+                addProjectUser(user_id, app.current_project_id).then(res => {
+                    app.project_user_list[index].is_add = true
+                });
+            },
+            getLevelList() {
+                let app = this;
+                getLevelList().then(res => {
+                    app.level_list = res.data.list
+                });
+            },
+            getTicketList() {
+                let app = this;
+                getTicketList().then(res => {
+                    app.ticket_list = res.data
+                });
+            },
+            getTypeList() {
+                let app = this;
+                getTypeList().then(res => {
+                    app.type_list = res.data.list
+                });
+            },
+            user_search: _.debounce(
+                function () {
+                    if (this.project_user_list.length > 0) {
+                        this.page_num = 1;
+                        this.getProjectUser()
+                    }
+                },
+                500
+            ),
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                // 这是我们为等级停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_projects = [];
+                $.each(selection, function (k, v) {
+                    app.select_projects.push(v.project_id)
+                });
+            },
+            changeEndDate(date) {
+                this.formValidate.end = date
+            },
+            changePrepayDate(date) {
+                this.formValidate.prepayDate = date
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getList()
+            },
+            reloadList() {
+                this.getList(1, this.page_size)
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        app.send_loading = true;
+                        doProject(app.form_url, app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning({
+                                    content: msg,
+                                    duration: 5
+                                });
+                            } else {
+                                app.form_modal = false;
+                                app.$Message.success('操作成功');
+                                app.getList()
+                            }
+                            app.send_loading = false;
+                        }).catch(res => {
+                            app.send_loading = false;
+                        });
+                    }
+                })
+            }
+        },
 
-  };
+    };
 </script>

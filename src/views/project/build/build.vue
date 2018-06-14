@@ -9,7 +9,7 @@
             <section class="nav-body">
                 <ul class="nav-wrapper nav nav-underscore pull-left">
                     <li><a class="app" data-app="tasks" @click="goTasks()">任务</a></li>
-                    <li class=""><a class="app" data-app="works" @click="goPage('/project/file/' + project_id)"> 文件 </a>
+                    <li class=""><a class="app" data-app="works" @click="$router.push('/project/file/' + project_id)"> 文件 </a>
                     <li class="actives"><a class="app" data-app="build"> 版本 </a></li>
                 </ul>
             </section>
@@ -111,7 +111,7 @@
                             id="editor"/>
                 </Form-item>
                 <div class="footer-item">
-                    
+
                     <Form-item>
                         <Button class="m-t-lg" type="primary" size="large" @click="handleSubmit('formValidate','edit')"
                                 :loading="send_loading" long>发布
@@ -192,248 +192,215 @@
 
 </style>
 <script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../assets/js/utils'
-  import * as Time from '../../../assets/js/time_format'
-  import $ from 'jquery'
-  import _ from 'lodash'
-  import editor from '../../../components/editor_2.0.vue'
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {getProjectBuildList,getBuildInfo,deleteProjectBuild,getInfo,doProjectBuild} from "@/api/project";
+    import * as utils from '../../../assets/js/utils'
+    import $ from 'jquery'
+    import _ from 'lodash'
+    import editor from '../../../components/editor_2.0.vue'
 
-  export default {
-    components: {
-      WrapperContent,
-      editor
-    },
-    data() {
-      return {
-        edit_build_modal: false,
-        delete_build_modal: false,
-        build_modal: false,
-        send_loading: false,
-        build_id: 0,
-        build_index: 0,
-        select_builds: [],
-        list_keyword: '',
-        project_info: {},
-        project_id: this.$route.params.project_id,
-        build_list: [],
-        editor_style: {
-          width: 'auto',
-          height: '250'
+    export default {
+        components: {
+            WrapperContent,
+            editor
         },
-        uploadImgUrl: utils.getUploadUrl('Project_Task.uploadContentImg'),
-        uploadHeaders: {
-          token: utils.getStore('token')
-        },
-        uploadParams: {
-          task_id: 0
-        },
-        menus: [
-          'head',	// 标题
-          'bold',	// 粗体
-          'italic',	// 斜体
-          'aligncenter',	// 居中
-          'img',	// 图片
-          'link',	// 链接
-          'unorderlist',	// 无序列表
-          'orderlist',	// 有序列表
-          'quote',	// 引用
-          'table',	// 表格
-          '|',
-          'fullscreen'	// 全屏
-        ],
-        formValidate: {
-          project_id: this.$route.params.project_id,
-          id: 0,
-          name: '',
-          desc: ''
-        },
-        ruleValidate: {
-          name: [
-            {required: true, message: '不要忘记填写版本名称', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    watch: {
-      list_keyword: function () {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-      }
-    },
-    created: function () {
-      this.getList()
-      this.getProjectInfo()
-    },
-    methods: {
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
-        },
-        // 这是我们为等级停止输入等待的毫秒数
-        500
-      ),
-      getList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.getProjectBuildList',
-          data: {
-            keyword: app.list_keyword,
-            project_id: app.project_id,
-          },
-          success: function (res) {
-            app.build_list = res.data.list
-          }
-        });
-      },
-      editBuild(build_id) {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.getBuildInfo',
-          data: {
-            id: build_id,
-          },
-          success: function (res) {
-            app.edit_build_modal = true
-            app.initContent(res.data.desc)
-            app.formValidate = {
-              id: res.data.id,
-              name: res.data.name,
-              desc: res.data.desc
-            }
-          }
-        });
-      },
-      addBuild() {
-        let app = this
-        app.build_modal = true
-        app.initContent(false)
-        app.formValidate = {
-          id: 0,
-          name: '',
-          desc: ''
-        }
-      },
-      deleteBuild(build_id,index) {
-        this.build_id = build_id
-        this.build_index = index
-        this.delete_build_modal = true
-      },
-      confirmDelBuild() {
-        let app = this
-        app.send_loading = true
-        utils.sendAjax({
-          url: 'Project_Project.deleteProjectBuild',
-          data: {
-            id: app.build_id,
-          },
-          success: function (res) {
-            const result = utils.showBack(res)
-            if (!result) {
-              app.$Message.warning({
-                content: res.msg,
-                duration: 5
-              });
-            }else{
-              app.delete_build_modal = false
-              app.build_list.splice(app.build_index,1)
-            }
-            app.send_loading = false
-          }
-        });
-      },
-      getProjectInfo() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.getInfo',
-          data: {
-            project_id: this.project_id
-          },
-          success: function (res) {
-            app.project_info = res.data
-          }
-        });
-      },
-      selectItem(selection) {
-        let app = this
-        app.select_builds = []
-        $.each(selection, function (k, v) {
-          app.select_builds.push(v.id)
-        });
-      },
-      editorLoad(originalName, resultText) {
-        // resultText 服务器端返回的text
-        // originalName 上传文件名
-        this.$refs.vueWangeditor.insertImg(resultText)
-      },
-      editorChange(a) {
-//                console.log(a)
-      },
-      initContent(value) {
-        if (value) {
-          this.$refs.vueWangeditor_edit.setHtml(value)
-          this.$refs.vueWangeditor_add.setHtml(value)
-        } else {
-          this.$refs.vueWangeditor_add.setHtml('')
-          this.$refs.vueWangeditor_edit.setHtml('')
-        }
-      },
-      handleSubmit(name,type) {
-        this.$refs[name].validate((valid) => {
-          if (valid) {
-            let app = this
-            if(type == 'edit') {
-              this.formValidate.desc = app.$refs.vueWangeditor_edit.getHtml()
-            }else{
-              this.formValidate.desc = app.$refs.vueWangeditor_add.getHtml()
-            }
-            this.formValidate.project_id = this.project_id
-            this.send_loading = true
-            let option = {
-              url: 'Project_Project.addProjectBuild',
-              method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const result = utils.showBack(res)
-                if (!result) {
-                  app.$Message.warning({
-                    content: res.msg,
-                    duration: 5
-                  });
-                } else {
-                  app.build_modal = false
-                  app.edit_build_modal = false
-                  app.initContent(false)
-                  app.formValidate = {
+        data() {
+            return {
+                edit_build_modal: false,
+                delete_build_modal: false,
+                build_modal: false,
+                send_loading: false,
+                build_id: 0,
+                build_index: 0,
+                select_builds: [],
+                list_keyword: '',
+                project_info: {},
+                project_id: this.$route.params.project_id,
+                build_list: [],
+                editor_style: {
+                    width: 'auto',
+                    height: '250'
+                },
+                uploadImgUrl: utils.getUploadUrl('Project_Task.uploadContentImg'),
+                uploadHeaders: {
+                    token: utils.getStore('token')
+                },
+                uploadParams: {
+                    task_id: 0
+                },
+                menus: [
+                    'head',	// 标题
+                    'bold',	// 粗体
+                    'italic',	// 斜体
+                    'aligncenter',	// 居中
+                    'img',	// 图片
+                    'link',	// 链接
+                    'unorderlist',	// 无序列表
+                    'orderlist',	// 有序列表
+                    'quote',	// 引用
+                    'table',	// 表格
+                    '|',
+                    'fullscreen'	// 全屏
+                ],
+                formValidate: {
+                    project_id: this.$route.params.project_id,
                     id: 0,
                     name: '',
                     desc: ''
-                  }
-                  app.$Message.success('操作成功')
-                  app.getList()
+                },
+                ruleValidate: {
+                    name: [
+                        {required: true, message: '不要忘记填写版本名称', trigger: 'blur'}
+                    ],
                 }
-                app.send_loading = false;
-              }, fail: function (res) {
-                app.send_loading = false;
-              }
             }
-            utils.sendAjax(option)
-          }
-        })
-      },
-      goTasks() {
-        const url = '/project/task/' + this.project_id + '?project_name=' + this.project_info.name
-        this.$router.push(url)
-      },
-      goPage(url) {
-        this.$router.push(url)
-      },
-    },
-  };
+        },
+        watch: {
+            list_keyword: function () {
+                this.search()
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getList()
+                }
+            }
+        },
+        created: function () {
+            this.getList();
+            this.getProjectInfo();
+        },
+        methods: {
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                // 这是我们为等级停止输入等待的毫秒数
+                500
+            ),
+            getList() {
+                let app = this;
+                getProjectBuildList(app.project_id,app.list_keyword).then(res => {
+                    app.build_list = res.data.list;
+
+                });
+            },
+            editBuild(build_id) {
+                let app = this;
+                getBuildInfo(build_id).then(res => {
+
+                    app.edit_build_modal = true
+                    app.initContent(res.data.desc)
+                    app.formValidate = {
+                        id: res.data.id,
+                        name: res.data.name,
+                        desc: res.data.desc
+                    }
+                });
+            },
+            addBuild() {
+                let app = this;
+                app.build_modal = true;
+                app.initContent(false);
+                app.formValidate = {
+                    id: 0,
+                    name: '',
+                    desc: ''
+                }
+            },
+            deleteBuild(build_id, index) {
+                this.build_id = build_id;
+                this.build_index = index;
+                this.delete_build_modal = true
+            },
+            confirmDelBuild() {
+                let app = this;
+                app.send_loading = true;
+                deleteProjectBuild(app.build_id).then(res => {
+                    const result = utils.showBack(res);
+                    if (!result) {
+                        app.$Message.warning({
+                            content: res.msg,
+                            duration: 5
+                        });
+                    } else {
+                        app.delete_build_modal = false;
+                        app.build_list.splice(app.build_index, 1)
+                    }
+                    app.send_loading = false
+                });
+            },
+            getProjectInfo() {
+                let app = this;
+                getInfo(app.project_id).then(res => {
+                    app.project_info = res.data
+                });
+            },
+            selectItem(selection) {
+                let app = this;
+                app.select_builds = [];
+                $.each(selection, function (k, v) {
+                    app.select_builds.push(v.id)
+                });
+            },
+            editorLoad(originalName, resultText) {
+                // resultText 服务器端返回的text
+                // originalName 上传文件名
+                this.$refs.vueWangeditor.insertImg(resultText)
+            },
+            editorChange(a) {
+//                console.log(a)
+            },
+            initContent(value) {
+                if (value) {
+                    this.$refs.vueWangeditor_edit.setHtml(value);
+                    this.$refs.vueWangeditor_add.setHtml(value)
+                } else {
+                    this.$refs.vueWangeditor_add.setHtml('');
+                    this.$refs.vueWangeditor_edit.setHtml('')
+                }
+            },
+            handleSubmit(name, type) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        if (type === 'edit') {
+                            this.formValidate.desc = app.$refs.vueWangeditor_edit.getHtml()
+                        } else {
+                            this.formValidate.desc = app.$refs.vueWangeditor_add.getHtml()
+                        }
+                        this.formValidate.project_id = this.project_id;
+                        this.send_loading = true;
+                        doProjectBuild(app.formValidate).then(res => {
+                            const result = utils.showBack(res);
+                            if (!result) {
+                                app.$Message.warning({
+                                    content: res.msg,
+                                    duration: 5
+                                });
+                            } else {
+                                app.build_modal = false;
+                                app.edit_build_modal = false;
+                                app.initContent(false);
+                                app.formValidate = {
+                                    id: 0,
+                                    name: '',
+                                    desc: ''
+                                };
+                                app.$Message.success('操作成功');
+                                app.getList()
+                            }
+                            app.send_loading = false;
+                        }).catch(res=>{
+                            app.send_loading = false;
+                        });
+                    }
+                })
+            },
+            goTasks() {
+                const url = '/project/task/' + this.project_id + '?project_name=' + this.project_info.name
+                this.$router.push(url)
+            },
+        }
+    };
 </script>

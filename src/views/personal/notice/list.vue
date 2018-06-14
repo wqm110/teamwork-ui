@@ -4,8 +4,10 @@
             <div class="data-content">
                 <div class="table-edit">
                     <div class="left-actions">
-                        <Select v-model="select_notice_type" @on-change="selectChange" placeholder="选择通知类型" multiple style="width:300px;text-align: left">
-                            <Option v-for="item in notice_type_list" :value="item.key" :key="item.key">{{ item.title }}</Option>
+                        <Select v-model="select_notice_type" @on-change="selectChange" placeholder="选择通知类型" multiple
+                                style="width:300px;text-align: left">
+                            <Option v-for="item in notice_type_list" :value="item.key" :key="item.id">{{ item.title }}
+                            </Option>
                         </Select>
                     </div>
                     <div class="right-actions">
@@ -63,246 +65,211 @@
 <style>
 
 </style>
-<script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../assets/js/utils'
-  import $ from 'jquery'
-  import _ from 'lodash'
-  import {sendAjax} from "../../../assets/js/utils";
+<script>
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import $ from 'jquery'
+    import _ from 'lodash'
+    import {getNotifyTypeList, getNotifyList, getTicketRead, batchTicketRead} from "@/api/common";
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        del_model: false,
-        form_modal: false,
-        select_notices: [],
-        send_loading: false,
-        notice_type_list: [],
-        select_notice_type: [],
-        page_size: 10,
-        page_num: 1,
-        is_read: 0,
-        keyword: '',
-        loading: true,
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '內容',
-            key: 'content',
-            sortable: true,
-            render: (h, params) => {
-              return h('a', {
-                attrs: {
-                  title: params.row.content
-                },
-                on: {
-                  click: () => {
-                    this.showNoticeDetail(params.row)
-                  }
-                }
-              }, params.row.content);
-            }
-          },
-          {
-            title: '类型',
-            width: 100,
-            key: 'notify_type_title',
-          },
-          {
-            title: '时间',
-            width: 150,
-            key: 'create_time',
-          },
-          {
-            title: '操作',
-            key: 'action',
-            align: 'center',
-            width: 100,
-            render: (h, params) => {
-              if (params.row.is_read == 1) {
-                return ''
-              }
-              return h('div', [
-                h('Tooltip', {
-                  props: {
-                    content: '标记为已读',
-                    placement: 'top'
-                  }
-                }, [
-                  h('Icon', {
-                    props: {
-                      type: 'checkmark',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.ticketRead(params.row.id, params.index)
-                      }
-                    }
-                  })
-                ])
-              ])
-            }
-          }
-        ],
-        notice_list: [],
-        notice_count: 0,
-      }
-    },
-    watch: {
-      keyword: function (newQuestion) {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-      }
-    },
-    created: function () {
-      this.getNotifyTypeList()
-      this.getList()
-    },
-    methods: {
-      getNotifyTypeList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Common_Notify.getNotifyTypeList',
-          success: function (res) {
-            app.notice_type_list = res.data
-          }
-        });
-      },
-      getList() {
-        let app = this
-        app.loading = true
-        utils.sendAjax({
-          url: 'Common_Notify.getList',
-          data: {
-            is_read: app.is_read,
-            notice_type: JSON.stringify(app.select_notice_type),
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.keyword
-          },
-          success: function (res) {
-            app.loading = false
-            app.notice_list = res.data.list
-            app.notice_count = Number(res.data.count)
-          }
-        });
-      },
-      ticketRead(id, index) {
-        let app = this
-        utils.sendAjax({
-          url: 'Common_Notify.ticketRead',
-          data: {
-            id: id,
-          },
-          success: function (res) {
-            app.notice_list.splice(index, 1)
-            app.getNotifyNoReadList()
-          }
-        });
-      },
-      batchTicketRead() {
-        let app = this
-        app.send_loading = true
-        utils.sendAjax({
-          url: 'Common_Notify.batchTicketRead',
-          data: {
-            ids: JSON.stringify(app.select_notices),
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.getList()
-            app.getNotifyNoReadList()
-          }
-        });
-      },
-      getNotifyNoReadList() {
-        let app = this
-        sendAjax({
-          url: 'Common_Notify.getList',
-          data:{
-            page_size: 5
-          },
-          success: function (res) {
-            app.$store.state.notify_no_read_list = res.data.list
-            app.$store.state.notify_no_read_count = res.data.count
-          }
-        });
-      },
-      showNoticeDetail(notice) {
-        const type = notice.type
-        const notice_data = JSON.parse(notice.send_data)
-        if (type == 1) {
-          const project_id = notice_data.project
-          this.goPage('/project/task/' + project_id)
-        }
-      },
-      selectChange(value){
-        this.getList()
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
+
+    export default {
+        components: {
+            WrapperContent,
         },
-        // 这是我们为消息停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_notices = []
-        $.each(selection, function (k, v) {
-          app.select_notices.push(v.id)
-        });
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getList()
-      },
-      tabClick(name) {
-        this.select_notices = []
-        if (name == 'no_read') {
-          if (this.is_read !== 0) {
-            this.is_read = 0;
-            this.reloadList()
-          }
-        } else {
-          if (this.is_read !== -1) {
-            this.is_read = -1;
-            this.reloadList()
-          }
+        data() {
+            return {
+                self: this,
+                del_model: false,
+                form_modal: false,
+                select_notices: [],
+                send_loading: false,
+                notice_type_list: [],
+                select_notice_type: [],
+                page_size: 10,
+                page_num: 1,
+                is_read: 0,
+                keyword: '',
+                loading: true,
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
+                    },
+                    {
+                        title: '內容',
+                        key: 'content',
+                        sortable: true,
+                        render: (h, params) => {
+                            return h('a', {
+                                attrs: {
+                                    title: params.row.content
+                                },
+                                on: {
+                                    click: () => {
+                                        this.showNoticeDetail(params.row)
+                                    }
+                                }
+                            }, params.row.content);
+                        }
+                    },
+                    {
+                        title: '类型',
+                        width: 100,
+                        key: 'notify_type_title',
+                    },
+                    {
+                        title: '时间',
+                        width: 150,
+                        key: 'create_time',
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        align: 'center',
+                        width: 100,
+                        render: (h, params) => {
+                            if (params.row.is_read == 1) {
+                                return ''
+                            }
+                            return h('div', [
+                                h('Tooltip', {
+                                    props: {
+                                        content: '标记为已读',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'checkmark',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.ticketRead(params.row.id, params.index)
+                                            }
+                                        }
+                                    })
+                                ])
+                            ])
+                        }
+                    }
+                ],
+                notice_list: [],
+                notice_count: 0,
+            }
+        },
+        watch: {
+            keyword: function (newQuestion) {
+                this.search()
+            },
+        },
+        created: function () {
+            this.getNotifyTypeList();
+            this.getList()
+        },
+        methods: {
+            getNotifyTypeList() {
+                let app = this;
+                getNotifyTypeList().then(res => {
+                    app.notice_type_list = res.data
+                });
+            },
+            getList() {
+                let app = this;
+                app.loading = true;
+                getNotifyList(this.page_size, {
+                    is_read: app.is_read,
+                    notice_type: JSON.stringify(app.select_notice_type),
+                    page_num: app.page_num,
+                    keyword: app.keyword
+                }).then(res => {
+                    app.loading = false;
+                    app.notice_list = res.data.list;
+                    app.notice_count = Number(res.data.count)
+                });
+            },
+            ticketRead(id, index) {
+                let app = this;
+                getTicketRead(id).then(res => {
+                    app.notice_list.splice(index, 1);
+                    app.getNotifyNoReadList()
+                });
+            },
+            batchTicketRead() {
+                let app = this;
+                app.send_loading = true;
+                batchTicketRead(JSON.stringify(app.select_notices)).then(res => {
+                    app.send_loading = false;
+                    app.getList();
+                    app.getNotifyNoReadList()
+                });
+            },
+            getNotifyNoReadList() {
+                let app = this;
+                getNotifyList(5).then(res => {
+                    app.$store.dispatch('UPDATE_NOTIFY_NO_READ_LIST', res.data.list);
+                    app.$store.dispatch('UPDATE_NOTIFY_NO_READ_COUNT', res.data.count);
+                });
+            },
+            showNoticeDetail(notice) {
+                const type = notice.type;
+                const notice_data = JSON.parse(notice.send_data);
+                if (type == 1) {
+                    const project_id = notice_data.project;
+                    this.$router.push('/project/task/' + project_id)
+                }
+            },
+            selectChange(value) {
+                this.getList()
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                // 这是我们为消息停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_notices = [];
+                $.each(selection, function (k, v) {
+                    app.select_notices.push(v.id)
+                });
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getList()
+            },
+            tabClick(name) {
+                this.select_notices = []
+                if (name == 'no_read') {
+                    if (this.is_read !== 0) {
+                        this.is_read = 0;
+                        this.reloadList()
+                    }
+                } else {
+                    if (this.is_read !== -1) {
+                        this.is_read = -1;
+                        this.reloadList()
+                    }
+                }
+            },
+            reloadList() {
+                this.page_num = 1;
+                this.getList()
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            }
         }
-      },
-      reloadList() {
-        this.page_num = 1
-        this.getList()
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
 
-  };
+    };
 </script>

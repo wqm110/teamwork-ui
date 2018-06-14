@@ -9,7 +9,8 @@
                 </div>
             </div>
             <div class="data-content">
-                <Table :loading="loading" border :columns="columns" :data="user_list" :row-class-name="rowClass" @on-row-click="rowClick"
+                <Table :loading="loading" border :columns="columns" :data="user_list" :row-class-name="rowClass"
+                       @on-row-click="rowClick"
                        class="no-border-table"></Table>
                 <Page v-if="userCount > 0" :total="userCount" :current="page_num" @on-change="changePage"
                       @on-page-size-change="changePageSize" size="small"
@@ -26,144 +27,121 @@
 <style>
 
 </style>
-<script type="es6">
-  import WrapperContent from '../../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../../assets/js/utils'
-  import $ from 'jquery'
-  import _ from 'lodash'
+<script>
+    import WrapperContent from '@/components/wrapper-content.vue'
+    import {getUserLevelList} from "@/api/user";
+    import _ from 'lodash'
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data: function () {
-      return {
-        del_model: false,
-        select_groups: [],
-        send_loading: false,
-        data_loading: false,
-        button_loading: false,
-        loading: false,
-        page_size: 10,
-        page_num: 1,
-        pid: 0,
-        list_keyword: '',
-        user_keyword: '',
-        columns: [
-          {
-            title: '名称',
-            width: '20%',
-            key: 'avatar',
-            render: (h, params) => {
-              return [
-                h('img', {
-                  attrs: {
-                    src: params.row.avatar,
-                    width: '35',
-                    class: 'img-circle user-item'
-                  }
-                }),
-                h('div', {
-                  attrs: {
-                    class: 'user-item user-detail'
-                  }
-                }, [
-                  h('strong', {}, params.row.realname),
-                  h('p', {
-                    attrs: {
-                      class: 'muted'
-                    }
-                  }, params.row.email)
-                ])
-              ];
-            }
-          },
-          {
-            title: '职位',
-            key: 'user_name',
-            render: (h, params) => {
-              return [
-                h('span', params.row.position_info.position_name)
-              ]
-            }
-          },
-          {
-            title: '等级',
-            key: 'level_name',
-            render: (h, params) => {
-              return [
-                h('span', params.row.level_info.level_name)
-              ]
-            }
-          },
-        ],
-        user_list: [],
-        userCount: 0,
-      }
-    },
-    watch: {
-      list_keyword: function () {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-        this.$store.state.list_reload = false
-      }
-    },
-    created: function () {
-      this.getList()
-    },
-    methods: {
-      getList() {
-        let app = this
-        app.select_groups = []
-//        app.loading = true
-        utils.sendAjax({
-          url: 'User_Level.getUserList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.list_keyword,
-            level_id: app.$route.params.id
-          },
-          success: function (res) {
-//            app.loading = false
-            app.user_list = res.data.list
-            app.userCount = Number(res.data.count)
-          }
-        });
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
+    export default {
+        components: {
+            WrapperContent,
         },
-        500
-      ),
-      changePage(page) {
-        this.page_num = page
-        this.getList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getList()
-      },
-      reloadList() {
-        this.getList()
-      },
-      rowClass(row, index) {
-        return 'team-user';
-      },
-      rowClick (row,index) {
-        console.log(row)
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
-  };
+        data: function () {
+            return {
+                del_model: false,
+                select_groups: [],
+                send_loading: false,
+                data_loading: false,
+                button_loading: false,
+                loading: false,
+                page_size: 10,
+                page_num: 1,
+                pid: 0,
+                list_keyword: '',
+                user_keyword: '',
+                columns: [
+                    {
+                        title: '名称',
+                        width: 200,
+                        key: 'avatar',
+                        render: (h, params) => {
+                            return [
+                                h('img', {
+                                    attrs: {
+                                        src: params.row.avatar,
+                                        width: '35',
+                                        class: 'img-circle user-item'
+                                    }
+                                }),
+                                h('div', {
+                                    attrs: {
+                                        class: 'user-item user-detail'
+                                    }
+                                }, [
+                                    h('strong', {}, params.row.realname),
+                                    h('p', {
+                                        attrs: {
+                                            class: 'muted'
+                                        }
+                                    }, params.row.email)
+                                ])
+                            ];
+                        }
+                    },
+                    {
+                        title: '职位',
+                        key: 'user_name',
+                        render: (h, params) => {
+                            return [
+                                h('span', params.row.position_info.position_name)
+                            ]
+                        }
+                    },
+                    {
+                        title: '等级',
+                        key: 'level_name',
+                        render: (h, params) => {
+                            return [
+                                h('span', params.row.level_info.level_name)
+                            ]
+                        }
+                    },
+                ],
+                user_list: [],
+                userCount: 0,
+            }
+        },
+        watch: {
+            list_keyword: function () {
+                this.search()
+            },
+        },
+        created: function () {
+            this.getList()
+        },
+        methods: {
+            getList() {
+                let app = this;
+                app.select_groups = [];
+                getUserLevelList(app.$route.params.id, this.page_size, this.page_num, this.list_keyword).then(res => {
+                    app.user_list = res.data.list;
+                    app.userCount = Number(res.data.count)
+                });
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                500
+            ),
+            changePage(page) {
+                this.page_num = page;
+                this.getList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getList()
+            },
+            reloadList() {
+                this.getList()
+            },
+            rowClass(row, index) {
+                return 'team-user';
+            },
+            rowClick(row, index) {
+            }
+        }
+    };
 </script>

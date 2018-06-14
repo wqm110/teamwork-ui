@@ -20,7 +20,7 @@
                             用户列表
                         </FormItem>
                         <FormItem label="描述" prop="desc">
-                            <Input v-model="formValidate.desc"  type="textarea" style="width: 500px"/>
+                            <Input v-model="formValidate.desc" type="textarea" style="width: 500px"/>
                         </FormItem>
                         <FormItem label="状态" prop="status">
                             <RadioGroup v-model="formValidate.status">
@@ -43,63 +43,56 @@
         </wrapper-content>
     </div>
 </template>
-<script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import {getStore, sendAjax} from '../../../assets/js/utils'
-  import $ from 'jquery'
+<script>
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {addRule} from "@/api/system";
 
-  export default {
-    components: {
-      WrapperContent
-    },
-    data() {
-      return {
-        formValidate: {
-          title: '',
-          name: '',
-          pid: this.$route.query.pid,
-          desc: '',
-          status: 1,
+
+    export default {
+        components: {
+            WrapperContent
         },
-        sending: false,
-        ruleValidate: {
-          title: [
-            {required: true, message: '权限标题不能为空', trigger: 'blur'}
-          ],
-          name: [
-            {required: true, message: '权限名称不能为空', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    methods: {
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if(valid) {
-            let app = this
-            this.sending = true
-            let option = {
-              url: 'System_AuthRule.addRule', method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret
-                const msg = res.msg
-                if (code !== 200) {
-                  app.$Message.warning(msg)
-                } else {
-                  app.$store.state.list_reload = true
-                  app.$Message.success('新增成功')
-                  app.$router.push({path:'/system/auth_rule/list',query:app.$route.query})
+        data() {
+            return {
+                formValidate: {
+                    title: '',
+                    name: '',
+                    pid: this.$route.query.pid,
+                    desc: '',
+                    status: 1,
+                },
+                sending: false,
+                ruleValidate: {
+                    title: [
+                        {required: true, message: '权限标题不能为空', trigger: 'blur'}
+                    ],
+                    name: [
+                        {required: true, message: '权限名称不能为空', trigger: 'blur'}
+                    ],
                 }
-                app.sending = false;
-              }, fail: function (res) {
-                app.sending = false;
-              }
             }
-            sendAjax(option)
-          }
-        })
-      },
+        },
+        methods: {
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.sending = true;
+                        addRule(app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg)
+                            } else {
+                                app.$store.state.list_reload = true;
+                                app.$Message.success('新增成功');
+                                app.$router.push({path: '/system/auth_rule/list', query: app.$route.query})
+                            }
+                            app.sending = false;
+                        });
+                    }
+                })
+            },
+        }
     }
-  }
 </script>

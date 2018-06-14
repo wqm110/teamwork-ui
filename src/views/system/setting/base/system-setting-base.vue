@@ -26,78 +26,60 @@
         </wrapper-content>
     </div>
 </template>
-<script type="es6">
-  import WrapperContent from '../../../../components/wrapper-content.vue'
-  import {setStore,getStore, sendAjax} from '../../../../assets/js/utils'
-  import $ from 'jquery'
+<script>
+    import WrapperContent from '../../../../components/wrapper-content.vue'
+    import {getSetting,doSetting} from "@/api/system";
+    import {setStore, getStore, sendAjax} from '../../../../assets/js/utils'
 
-  export default {
-    components: {
-      WrapperContent
-    },
-    data() {
-      return {
-        indeterminate: true,
-        checkAll: false,
-        group_list: [],
-        formValidate: {
-          site_name: '',
-          status: 1,
+    export default {
+        components: {
+            WrapperContent
         },
-        sending: false,
-        ruleValidate: {
+        data() {
+            return {
+                indeterminate: true,
+                checkAll: false,
+                group_list: [],
+                formValidate: {
+                    site_name: '',
+                    status: 1,
+                },
+                sending: false,
+                ruleValidate: {}
+            }
+        },
+        created() {
+            this.getData()
+        },
+        methods: {
+            getData() {
+                let app = this;
+                getSetting('base_setting').then(res => {
+                    if (res.data) {
+                        app.formValidate = res.data
+                    }
+                });
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.sending = true;
+                        doSetting('base_setting',JSON.stringify(app.formValidate)).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg);
+                            } else {
+                                app.$store.dispatch("SET_LIST_RELOAD", true);
+                                app.$store.dispatch("SET_SYSTEM_INFO", app.formValidate);
+                                app.$Message.success('保存成功')
+                            }
+                            app.sending = false;
+                        });
+                    }
+                })
+            },
         }
-      }
-    },
-    created() {
-      this.getData()
-    },
-    methods: {
-      getData() {
-        let app = this
-        sendAjax({
-          url: 'System_Setting.getSetting',
-          data: {
-            set_name: 'base_setting'
-          },
-          success: function (res) {
-            if (res.data) {
-              app.formValidate = res.data
-            }
-          }
-        });
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if (valid) {
-            let app = this
-            this.sending = true
-            let option = {
-              url: 'System_Setting.doSetting', method: 'post',
-              data: {
-                name: 'base_setting',
-                value: JSON.stringify(app.formValidate)
-              },
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning(msg);
-                } else {
-                  app.$store.state.list_reload = true
-                  app.$store.state.system_info = app.formValidate
-                  setStore('system_info', app.formValidate)
-                  app.$Message.success('保存成功')
-                }
-                app.sending = false;
-              }, fail: function (res) {
-                app.sending = false;
-              }
-            }
-            sendAjax(option)
-          }
-        })
-      },
     }
-  }
 </script>

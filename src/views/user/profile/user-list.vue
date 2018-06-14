@@ -4,12 +4,15 @@
             <div class="data-content">
                 <div class="table-edit">
                     <div class="left-actions">
-                        <Button permission="User_User.addUser" @click="form_modal = !form_modal,form_action = 'add'"  type="primary" shape="circle" icon="plus">
+                        <Button permission="User_User.addUser" @click="form_modal = !form_modal,form_action = 'add'"
+                                type="primary" shape="circle" icon="plus">
                             新增用户
                         </Button>
                     </div>
                     <div class="right-actions">
-                        <Button @click="del_model = true" type="ghost" shape="circle" :disabled="select_users.length <= 0">删除用户</Button>
+                        <Button @click="del_model = true" type="ghost" shape="circle"
+                                :disabled="select_users.length <= 0">删除用户
+                        </Button>
                         <div class="search-input">
                             <Input v-model="keyword" icon="ios-search-strong" placeholder="搜索"/>
                         </div>
@@ -68,7 +71,8 @@
                 </Form-item>
                 <Form-item prop="level_id">
                     <Select v-model="formValidate.position_id" placeholder="用户职位" filterable>
-                        <Option v-for="item in position_list" :value="item.id" :key="item.id" :label="item.position_name">
+                        <Option v-for="item in position_list" :value="item.id" :key="item.id"
+                                :label="item.position_name">
                             <span> {{ item.position_name }}</span>
                             <span style="float:right;color:#ccc"> {{ item.eng_name }}</span>
                         </Option>
@@ -104,7 +108,7 @@
                 title="操作提示">
             <p>真的要删除当前选中项吗？一旦删除将无法恢复，请想好了再决定 </p>
             <div slot="footer">
-                <Button type="text"  @click="del_model = false">取消</Button>
+                <Button type="text" @click="del_model = false">取消</Button>
                 <Button type="error" :loading="send_loading" @click="delConfirm">删了</Button>
             </div>
         </Modal>
@@ -114,368 +118,319 @@
 
     </div>
 </template>
-<script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../assets/js/utils'
-  import $ from 'jquery'
-  import _ from 'lodash'
+<script>
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {getUserList, getUser, getLevelList, getPositionList,doUserInfo,delUser,changeUserState} from "@/api/user";
+    import * as utils from '../../../assets/js/utils'
+    import $ from 'jquery'
+    import _ from 'lodash'
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        form_modal: false,
-        form_action: 'add',
-        form_title: '添加新用户',
-        form_url: 'User_User.addUser',
-        form_submit: '添加',
-        formValidate: {
-          user_id: 0,
-          account: '',
-          realname: '',
-          password: '',
-          password_confirm: '',
-          level_id: 0,
-          position_id: 0,
-          state: 1,
+    export default {
+        components: {
+            WrapperContent,
         },
-        ruleValidate: {
-          account: [
-            {required: true, message: '用户编号不能为空', trigger: 'blur'}
-          ],
-          realname: [
-            {required: true, message: '用户昵称不能为空', trigger: 'blur'}
-          ]
+        data() {
+            return {
+                self: this,
+                form_modal: false,
+                form_action: 'add',
+                form_title: '添加新用户',
+                form_url: 'add',
+                form_submit: '添加',
+                formValidate: {
+                    user_id: 0,
+                    account: '',
+                    realname: '',
+                    password: '',
+                    password_confirm: '',
+                    level_id: 0,
+                    position_id: 0,
+                    state: 1,
+                },
+                ruleValidate: {
+                    account: [
+                        {required: true, message: '用户编号不能为空', trigger: 'blur'}
+                    ],
+                    realname: [
+                        {required: true, message: '用户昵称不能为空', trigger: 'blur'}
+                    ]
+                },
+                level_list: [],
+                position_list: [],
+                del_model: false,
+                select_users: [],
+                send_loading: false,
+                page_size: 10,
+                page_num: 1,
+                keyword: '',
+                loading: true,
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
+                    },
+                    {
+                        title: '用户编号',
+                        key: 'account',
+                        render: (h, params) => {
+                            return h('router-link', {
+                                props: {
+                                    to: '/team/user/detail/' + params.row.id
+                                }
+                            }, params.row.account)
+                        }
+                    },
+                    {
+                        title: '用户昵称',
+                        key: 'realname'
+                    },
+                    {
+                        title: '用户职位',
+                        render: (h, params) => {
+                            return h('span', params.row.position_info.position_name)
+                        }
+                    },
+                    {
+                        title: '用户等级',
+                        render: (h, params) => {
+                            return h('span', params.row.level_info.level_name + '（' + params.row.level_info.eng_name + '）')
+                        }
+                    },
+                    {
+                        title: '账号状态',
+                        key: 'state',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('i-switch', {
+                                    props: {
+                                        value: params.row.state == 1 ? true : false
+                                    },
+                                    on: {
+                                        'on-change': () => {
+                                            this.changeState(params.row.id, params.row.state, params.index)
+                                        }
+                                    },
+                                }),
+                            ]);
+                        }
+                    },
+                    {
+                        title: '登录时间',
+                        key: 'last_login_time',
+                    },
+                    {
+                        title: '登录IP',
+                        key: 'login_ip',
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        align: 'center',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Tooltip', {
+                                    props: {
+                                        content: '编辑',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'compose',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.id)
+                                            }
+                                        }
+                                    }),
+                                ]),
+                                h('Tooltip', {
+                                    props: {
+                                        content: '授权',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'paper-airplane',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.$router.push('ass_group_access/' + params.row.id)
+                                            }
+                                        }
+                                    }),
+                                ])
+                            ])
+                        }
+                    }
+                ],
+                user_list: [],
+                userCount: 0,
+            }
         },
-        level_list: [],
-        position_list: [],
-        del_model: false,
-        select_users: [],
-        send_loading: false,
-        page_size: 10,
-        page_num: 1,
-        keyword: '',
-        loading: true,
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '用户编号',
-            key: 'account',
-            render: (h, params) => {
-              return h('router-link',{
-                props:{
-                  to: '/team/user/detail/' + params.row.id
-                }
-              }, params.row.account)
-            }
-          },
-          {
-            title: '用户昵称',
-            key: 'realname'
-          },
-          {
-            title: '用户职位',
-            render: (h,params) => {
-              return h('span',params.row.position_info.position_name)
-            }
-          },
-          {
-            title: '用户等级',
-            render: (h,params) => {
-              return h('span',params.row.level_info.level_name + '（' + params.row.level_info.eng_name + '）')
-            }
-          },
-          {
-            title: '账号状态',
-            key: 'state',
-            render: (h, params) => {
-              return h('div', [
-                h('i-switch', {
-                  props: {
-                    value: params.row.state == 1 ? true : false
-                  },
-                  on: {
-                    'on-change': () => {
-                      this.changeState(params.row.id, params.row.state, params.index)
-                    }
-                  },
-                }),
-              ]);
-            }
-          },
-          {
-            title: '登录时间',
-            key: 'last_login_time',
-          },
-          {
-            title: '登录IP',
-            key: 'login_ip',
-          },
-          {
-            title: '操作',
-            key: 'action',
-            align: 'center',
-            render: (h, params) => {
-              return h('div',[
-                h('Tooltip',{
-                  props: {
-                    content: '编辑',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'compose',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.id)
-                      }
-                    }
-                  }),
-                ]),
-                h('Tooltip',{
-                  props: {
-                    content: '授权',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'paper-airplane',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.goPage('ass_group_access/' + params.row.id)
-                      }
-                    }
-                  }),
-                ])
-              ])
-            }
-          }
-        ],
-        user_list: [],
-        userCount: 0 ,
-      }
-    },
-    watch: {
-      form_action: function (value) {
-        if(value == 'add'){
-          this.form_title = '添加新用户'
-          this.form_submit = '添加'
-          this.form_url = 'User_User.addUser'
-        }else{
-          this.form_title = '编辑用户'
-          this.form_submit = '保存'
-          this.form_url = 'User_User.editUser'
-        }
-      },
-      form_modal: function (value) {
-        if(value === false) {
-          this.formValidate = {
-            user_id: 0,
-            account: '',
-            realname: '',
-            password: '',
-            password_confirm: '',
-            state: 1,
-          }
-        }
-      },
-      keyword: function (newQuestion) {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getUserList()
-        }
-      }
-    },
-    created: function () {
-      this.getUserList()
-      this.getLevelList()
-      this.getPositionList()
-    },
-    methods: {
-      getUserList() {
-        let app = this
-        utils.sendAjax({
-          url: 'User_User.getUserList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.keyword
-          },
-          success: function (res) {
-            app.loading = false
-            app.user_list = res.data.list
-            app.userCount = Number(res.data.count)
-          }
-        });
-      },
-      getInfo(){
-        let app = this
-        utils.sendAjax({
-          url: 'User_User.getUser',
-          data: {user_id:  app.formValidate.user_id},
-          success: function (res) {
-            if (res.data) {
-              app.formValidate.user_id = res.data.id
-              app.formValidate.account = res.data.account
-              app.formValidate.realname = res.data.realname
-              app.formValidate.level_id = res.data.level_id
-              app.formValidate.position_id = res.data.position_id
-              app.formValidate.state = res.data.state
-            }
-          }
-        });
-      },
-      getLevelList() {
-        let app = this
-        utils.sendAjax({
-          url: 'User_Level.getList',
-          data: {
-            page_size: 50,
-          },
-          success: function (res) {
-            app.level_list = res.data.list
-          }
-        });
-      },
-      getPositionList() {
-        let app = this
-        utils.sendAjax({
-          url: 'User_Position.getList',
-          data: {
-            page_size: 50,
-          },
-          success: function (res) {
-            app.position_list = res.data.list
-          }
-        });
-      },
-      editItem (id){
-        this.formValidate.user_id = id
-        this.getInfo()
-        this.form_modal = true
-        this.form_action = 'edit'
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if(valid) {
-            if(this.formValidate.password !== this.formValidate.password_confirm){
-              this.$Message.warning('两次输入的密码不相同')
-              return false
-            }
-            let app = this
-            this.send_loading = true
-            let option = {
-              url: app.form_url, method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning(msg);
+        watch: {
+            form_action: function (value) {
+                if (value == 'add') {
+                    this.form_title = '添加新用户';
+                    this.form_submit = '添加';
+                    this.form_url = 'add'
                 } else {
-                  app.form_modal = false
-                  app.$Message.success('操作成功')
-                  app.getUserList()
+                    this.form_title = '编辑用户';
+                    this.form_submit = '保存';
+                    this.form_url = 'edit'
                 }
-                app.send_loading = false;
-              }, fail: function (res) {
-                app.send_loading = false;
-              }
+            },
+            form_modal: function (value) {
+                if (value === false) {
+                    this.formValidate = {
+                        user_id: 0,
+                        account: '',
+                        realname: '',
+                        password: '',
+                        password_confirm: '',
+                        state: 1,
+                    }
+                }
+            },
+            keyword: function (newQuestion) {
+                this.search()
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getUserList()
+                }
             }
-            utils.sendAjax(option)
-          }
-        })
-      },
-      delConfirm (){
-        this.delItem()
-      },
-      delItem(){
-        let app = this
-        app.send_loading = true
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'User_User.delUser',
-          data: {
-            ids: JSON.stringify(app.select_users),
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.del_model = false
-            if(res.ret == 200){
-              app.$Message.success('删除成功');
-              app.getUserList()
-            }else{
-              app.$Message.warning(res.msg);
-            }
-          }
-        });
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getUserList()
         },
-        // 这是我们为用户停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_users = []
-        $.each(selection, function (k, v) {
-          app.select_users.push(v.id)
-        });
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getUserList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getUserList()
-      },
-      reloadList() {
-        this.getUserList(1, this.page_size)
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      changeState(id, state, index) {
-        let app = this
-        const change_state = state == 1 ? 0 : 1
-        utils.sendAjax({
-          url: 'User_User.changeState',
-          data: {
-            user_id: id,
-            state: state == 1 ? 0 : 1
-          },
-          success: function (res) {
-            app.user_list[index].state = change_state
-          }
-        });
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
-
-  }
+        created: function () {
+            this.getUserList();
+            this.getLevelList();
+            this.getPositionList()
+        },
+        methods: {
+            getUserList() {
+                let app = this;
+                getUserList(this.page_size, this.page_num, this.keyword).then(res => {
+                    app.loading = false;
+                    app.user_list = res.data.list;
+                    app.userCount = Number(res.data.count)
+                });
+            },
+            getInfo() {
+                let app = this;
+                getUser(app.formValidate.user_id).then(res => {
+                    if (res.data) {
+                        app.formValidate.user_id = res.data.id;
+                        app.formValidate.account = res.data.account;
+                        app.formValidate.realname = res.data.realname;
+                        app.formValidate.level_id = res.data.level_id;
+                        app.formValidate.position_id = res.data.position_id;
+                        app.formValidate.state = res.data.state
+                    }
+                });
+            },
+            getLevelList() {
+                let app = this;
+                getLevelList(50).then(res => {
+                    app.level_list = res.data.list
+                });
+            },
+            getPositionList() {
+                let app = this;
+                getPositionList(50).then(res => {
+                    app.position_list = res.data.list
+                });
+            },
+            editItem(id) {
+                this.formValidate.user_id = id;
+                this.getInfo();
+                this.form_modal = true;
+                this.form_action = 'edit'
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        if (this.formValidate.password !== this.formValidate.password_confirm) {
+                            this.$Message.warning('两次输入的密码不相同');
+                            return false
+                        }
+                        let app = this;
+                        this.send_loading = true;
+                        doUserInfo(app.form_url,app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg);
+                            } else {
+                                app.form_modal = false;
+                                app.$Message.success('操作成功');
+                                app.getUserList()
+                            }
+                            app.send_loading = false;
+                        });
+                    }
+                })
+            },
+            delConfirm() {
+                this.delItem()
+            },
+            delItem() {
+                let app = this;
+                app.send_loading = true;
+                delUser(JSON.stringify(app.select_users)).then(res => {
+                    app.send_loading = false;
+                    app.del_model = false;
+                    if (res.ret === 200) {
+                        app.$Message.success('删除成功');
+                        app.getUserList()
+                    } else {
+                        app.$Message.warning(res.msg);
+                    }
+                });
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getUserList()
+                },
+                // 这是我们为用户停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_users = [];
+                $.each(selection, function (k, v) {
+                    app.select_users.push(v.id)
+                });
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getUserList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getUserList()
+            },
+            reloadList() {
+                this.getUserList(1, this.page_size)
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            },
+            changeState(id, state, index) {
+                let app = this;
+                const change_state = state == 1 ? 0 : 1;
+                changeUserState(id,state == 1 ? 0 : 1).then(res => {
+                    app.user_list[index].state = change_state
+                });
+            }
+        }
+    }
 </script>

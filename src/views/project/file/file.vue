@@ -10,7 +10,8 @@
                 <ul class="nav-wrapper nav nav-underscore pull-left">
                     <li><a class="app" data-app="tasks" @click="goTasks()">任务</a></li>
                     <li class="actives"><a class="app" data-app="works"> 文件 </a></li>
-                    <li class=""><a class="app" data-app="build" @click="goPage('/project/build/' + project_id)"> 版本 </a></li>
+                    <li class=""><a class="app" data-app="build" @click="$router.push('/project/build/' + project_id)">
+                        版本 </a></li>
                 </ul>
             </section>
         </div>
@@ -25,7 +26,8 @@
                             :show-upload-list="false"
                             :on-progress="uploadProgress"
                             :on-success="uploadSuccess">
-                        <Button type="text" icon="arrow-up-a" @click="upload_file_modal = !upload_file_modal">上传</Button>
+                        <Button type="text" icon="arrow-up-a" @click="upload_file_modal = !upload_file_modal">上传
+                        </Button>
                     </Upload>
                     <div class="search-input">
                         <Input class="search-input" v-model="list_keyword" icon="ios-search-strong" placeholder="搜索"/>
@@ -37,7 +39,7 @@
                     <i-col>
                         <div class="file-content" style="background-color: #FFF;padding-bottom: 50px;">
                             <div class="library-header vertical-middle">
-                                <span class="muted"  v-if="select_files.length > 0">
+                                <span class="muted" v-if="select_files.length > 0">
                                     <span class="library-count">已选择 {{ select_files.length }} 项</span>
                                     <a class="muted" @click="batchDownloadFile">
                                         <Icon type="ios-download-outline" size="16"></Icon> 下载
@@ -98,7 +100,8 @@
         font-size: 15px;
         height: 62px;
     }
-    .file-page .library-header a{
+
+    .file-page .library-header a {
         padding-right: 15px;
     }
 
@@ -112,319 +115,297 @@
 
 </style>
 <script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../assets/js/utils'
-  import {format} from "../../../assets/js/file_format";
-  import * as Time from '../../../assets/js/time_format'
-  import $ from 'jquery'
-  import _ from 'lodash'
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {getProjectFileList,getInfo,delTaskFile} from "@/api/project";
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      let select_list = []
-      return {
-        upload_file_modal: false,
-        delete_file_modal: false,
-        send_loading: false,
-        file_id: 0,
-        file_index: 0,
-        select_files: [],
-        list_keyword: '',
-        project_info: {},
-        project_id: this.$route.params.project_id,
-        file_list: [],
-        file_columns: [
-          //todo 增加多选，批量删除，批量下载（打包zip后下载）
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '名称',
-            width: 450,
-            key: 'old_file_name',
-            render: (h, params) => {
-              return h('div',{
-                class: 'vertical-middle'
-              }, [
-                h('svg', {
-                  class: 'icon link-icon m-r'
-                }, [
-                  h('use', {
-                    attrs: {
-                      href: this.formatFile(params.row.extension)
-                    }
-                  })
-                ]),
-                h('span', params.row.title)
-              ])
-            }
-          },
-          {
-            title: '大小',
-            key: 'file_size',
-            sortable: true,
-            render: (h, params) => {
-              return h('span',
-                params.row.size / 1000 + 'KB')
-            }
-          },
-          {
-            title: '创建者',
-            key: 'user_info',
-            render: (h, params) => {
-              return h('span',
-                params.row.user_info.realname)
-            }
-          },
-          {
-            title: '更新时间',
-            key: 'add_time',
-            sortable: true,
-            render: (h, params) => {
-              return h('Tooltip', {
-                props: {
-                  content: this.showFileTime(params.row.addedDate, false),
-                  placement: 'top'
-                }
-              }, [
-                h('span', this.showFileTime(params.row.addedDate, true))
-              ])
-            }
-          },
-          {
-            title: ' ',
-            key: 'action',
-            align: 'center',
-            render: (h, params) => {
-              return h('div',[
-                h('Tooltip',{
-                  props: {
-                    content: '下载',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'ios-download-outline',
-                      size: '24'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.downloadFile(params.row.id)
-                      }
-                    }
-                  })
-                ]),
-                h('Tooltip',{
-                  props: {
-                    content: '更新',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'ios-upload-outline',
-                      size: '24'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.project_id)
-                      }
-                    }
-                  })
-                ]),
-                h('Tooltip',{
-                  props: {
-                    content: '重命名',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'ios-compose-outline',
-                      size: '24'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.project_id)
-                      }
-                    }
-                  })
-                ]),
-                h('Tooltip',{
-                  props: {
-                    content: '删除',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'ios-trash-outline',
-                      size: '24'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.delete_file_modal = true
-                        this.file_id = params.row.id
-                        this.file_index = params.index
-                      }
-                    }
-                  })
-                ])
-              ])
-            }
-          }
-        ],
-        rowClass(row, index) {
-          return 'file-row-class';
+    import * as utils from '../../../assets/js/utils'
+    import {format} from "../../../assets/js/file_format";
+    import * as Time from '../../../assets/js/time_format'
+    import $ from 'jquery'
+    import _ from 'lodash'
+
+    export default {
+        components: {
+            WrapperContent,
         },
-        upload_config: {
-          url: utils.getUploadUrl('Project_Task.uploadTaskFile'),
-          headers: {
-            token: utils.getStore('token')
-          },
-          name: 'file',
-          data: {
-            //todo 上传文件
+        data() {
+            return {
+                upload_file_modal: false,
+                delete_file_modal: false,
+                send_loading: false,
+                file_id: 0,
+                file_index: 0,
+                select_files: [],
+                list_keyword: '',
+                project_info: {},
+                project_id: this.$route.params.project_id,
+                file_list: [],
+                file_columns: [
+                    //todo 增加多选，批量删除，批量下载（打包zip后下载）
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
+                    },
+                    {
+                        title: '名称',
+                        width: 450,
+                        key: 'old_file_name',
+                        render: (h, params) => {
+                            return h('div', {
+                                class: 'vertical-middle'
+                            }, [
+                                h('svg', {
+                                    class: 'icon link-icon m-r'
+                                }, [
+                                    h('use', {
+                                        attrs: {
+                                            href: this.formatFile(params.row.extension)
+                                        }
+                                    })
+                                ]),
+                                h('span', params.row.title)
+                            ])
+                        }
+                    },
+                    {
+                        title: '大小',
+                        key: 'file_size',
+                        sortable: true,
+                        render: (h, params) => {
+                            return h('span',
+                                params.row.size / 1000 + 'KB')
+                        }
+                    },
+                    {
+                        title: '创建者',
+                        key: 'user_info',
+                        render: (h, params) => {
+                            return h('span',
+                                params.row.user_info.realname)
+                        }
+                    },
+                    {
+                        title: '更新时间',
+                        key: 'add_time',
+                        sortable: true,
+                        render: (h, params) => {
+                            return h('Tooltip', {
+                                props: {
+                                    content: this.showFileTime(params.row.addedDate, false),
+                                    placement: 'top'
+                                }
+                            }, [
+                                h('span', this.showFileTime(params.row.addedDate, true))
+                            ])
+                        }
+                    },
+                    {
+                        title: ' ',
+                        key: 'action',
+                        align: 'center',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Tooltip', {
+                                    props: {
+                                        content: '下载',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'ios-download-outline',
+                                            size: '24'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.downloadFile(params.row.id)
+                                            }
+                                        }
+                                    })
+                                ]),
+                                h('Tooltip', {
+                                    props: {
+                                        content: '更新',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'ios-upload-outline',
+                                            size: '24'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.project_id)
+                                            }
+                                        }
+                                    })
+                                ]),
+                                h('Tooltip', {
+                                    props: {
+                                        content: '重命名',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'ios-compose-outline',
+                                            size: '24'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.project_id)
+                                            }
+                                        }
+                                    })
+                                ]),
+                                h('Tooltip', {
+                                    props: {
+                                        content: '删除',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'ios-trash-outline',
+                                            size: '24'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.delete_file_modal = true;
+                                                this.file_id = params.row.id;
+                                                this.file_index = params.index
+                                            }
+                                        }
+                                    })
+                                ])
+                            ])
+                        }
+                    }
+                ],
+                rowClass(row, index) {
+                    return 'file-row-class';
+                },
+                upload_config: {
+                    url: utils.getUploadUrl('Project_Task.uploadTaskFile'),
+                    headers: {
+                        token: utils.getStore('token')
+                    },
+                    name: 'file',
+                    data: {
+                        //todo 上传文件
 //            id: 163
-          }
+                    }
+                },
+            }
         },
-      }
-    },
-    watch: {
-      list_keyword: function () {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-      }
-    },
-    created: function () {
-      this.getList()
-      this.getProjectInfo()
-    },
-    methods: {
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
+        watch: {
+            list_keyword: function () {
+                this.search()
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getList()
+                }
+            }
         },
-        // 这是我们为等级停止输入等待的毫秒数
-        500
-      ),
-      getList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.getProjectFileList',
-          data: {
-            keyword: app.list_keyword,
-            project_id: app.project_id,
-          },
-          success: function (res) {
-            app.file_list = res.data.list
-          }
-        });
-      },
-      getProjectInfo() {
-        let app = this
-        utils.sendAjax({
-          url: 'Project_Project.getInfo',
-          data: {
-            project_id: this.project_id
-          },
-          success: function (res) {
-            app.project_info = res.data
-          }
-        });
-      },
-      confirmDelTaskFile(){
-        let app = this
-        this.send_loading = true
-        utils.sendAjax({
-          url: 'Project_Task.delTaskFile',
-          data: {
-            file_id: this.file_id
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.delete_file_modal = false
-            app.file_list.splice(app.file_index,1)
-          }
-        });
-      },
-      selectItem(selection) {
-        let app = this
-        app.select_files = []
-        $.each(selection, function (k, v) {
-          app.select_files.push(v.id)
-        });
-      },
-      formatFile(file_ext) {
-        return format(file_ext)
-      },
-      downloadFile(file_id) {
-        window.open(utils.getDirectUrl('Project_Task.downloadTaskFile&file_id=' + file_id))
-      },
-      batchDownloadFile() {
-        window.open(utils.getFullUrl('Project_Project.batchDownloadTaskFile&ids=' + JSON.stringify(this.select_files)))
-      },
-      showFileTime(time, prettyTime) {
-        if (prettyTime) {
-          return Time.showBeforeTime(time)
-        } else {
-          return Time.showBeforeTime(time, false)
+        created: function () {
+            this.getList();
+            this.getProjectInfo()
+        },
+        methods: {
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                // 这是我们为等级停止输入等待的毫秒数
+                500
+            ),
+            getList() {
+                let app = this;
+                getProjectFileList(app.project_id,app.list_keyword).then(res => {
+                    app.file_list = res.data.list
+                });
+            },
+            getProjectInfo() {
+                let app = this;
+                getInfo(app.project_id).then(res => {
+                    app.project_info = res.data
+                });
+            },
+            confirmDelTaskFile() {
+                let app = this;
+                this.send_loading = true;
+                delTaskFile(this.file_id).then(res => {
+                    app.send_loading = false;
+                    app.delete_file_modal = false;
+                    app.file_list.splice(app.file_index, 1)
+                });
+            },
+            selectItem(selection) {
+                let app = this;
+                app.select_files = [];
+                $.each(selection, function (k, v) {
+                    app.select_files.push(v.id)
+                });
+            },
+            formatFile(file_ext) {
+                return format(file_ext)
+            },
+            downloadFile(file_id) {
+                window.open(utils.getDirectUrl('Project_Task.downloadTaskFile&file_id=' + file_id))
+            },
+            batchDownloadFile() {
+                window.open(utils.getFullUrl('Project_Project.batchDownloadTaskFile&ids=' + JSON.stringify(this.select_files)))
+            },
+            showFileTime(time, prettyTime) {
+                if (prettyTime) {
+                    return Time.showBeforeTime(time)
+                } else {
+                    return Time.showBeforeTime(time, false)
+                }
+            },
+            uploadProgress(event, file, fileList) {
+                let app = this;
+                this.send_loading = true;
+                setTimeout(function () {
+                    if (app.send_loading) {
+                        app.$Message.loading({
+                            content: '正在上传，请稍后...',
+                            duration: 10
+                        })
+                    }
+                }, 500)
+            },
+            uploadSuccess(response, file, fileList) {
+                let result = utils.showBack(response);
+                this.send_loading = false
+                if (result) {;
+                    this.$Message.destroy();
+                    this.$Message.success({
+                        content: '上传文件成功',
+                        duration: 3
+                    });
+                    this.getList()
+                } else {
+                    this.$Message.destroy();
+                    this.$Message.error({
+                        content: response.msg,
+                        duration: 3
+                    });
+                    this.$refs.upload.fileList.splice(fileList.indexOf(file), 1)
+                }
+            },
+            goTasks() {
+                const url = '/project/task/' + this.project_id + '?project_name=' + this.project_info.name
+                this.$router.push(url)
+            },
         }
-      },
-      uploadProgress ( event, file, fileList) {
-        let app = this
-        this.send_loading = true
-        setTimeout(function () {
-          if(app.send_loading) {
-            app.$Message.loading({
-              content: '正在上传，请稍后...',
-              duration: 10
-            })
-          }
-        },500)
-      },
-      uploadSuccess(response, file, fileList){
-        let result = utils.showBack(response)
-        this.send_loading = false
-        if (result) {
-          this.$Message.destroy()
-          this.$Message.success({
-            content: '上传文件成功',
-            duration: 3
-          })
-          this.getList()
-        } else {
-          this.$Message.destroy()
-          this.$Message.error({
-            content: response.msg,
-            duration: 3
-          })
-          this.$refs.upload.fileList.splice(fileList.indexOf(file), 1)
-        }
-      },
-      goTasks() {
-        const url = '/project/task/' + this.project_id + '?project_name=' + this.project_info.name
-        this.$router.push(url)
-      },
-      goPage(url) {
-        this.$router.push(url)
-      },
-    },
-  };
+    };
 </script>

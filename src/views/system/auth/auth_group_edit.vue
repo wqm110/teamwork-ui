@@ -31,7 +31,9 @@
                         <div class="edit-group-appAny" v-for="(menu,index) in menu_list_format" :key="index">
                             <h4>
                                 <Checkbox-group v-model="top_menu_list">
-                                    <Checkbox  :label="menu.id" @click.native.prevent="menuSelect(menu.id,1)">{{ menu.title }}</Checkbox>
+                                    <Checkbox :label="menu.id" @click.native.prevent="menuSelect(menu.id,1)">{{
+                                        menu.title }}
+                                    </Checkbox>
                                 </Checkbox-group>
                             </h4>
                             <div class="edit-author-appwrap">
@@ -69,7 +71,8 @@
                                     <h5>
                                         <Checkbox-group v-model="formValidate.rules">
                                             <Checkbox :label="menu.id"
-                                                      @click.native.prevent="authSelect(menu.id,1)">{{ menu.title }}</Checkbox>
+                                                      @click.native.prevent="authSelect(menu.id,1)">{{ menu.title }}
+                                            </Checkbox>
                                         </Checkbox-group>
                                     </h5>
                                     <Checkbox-group v-model="formValidate.rules">
@@ -86,7 +89,7 @@
                                 <Button type="primary" @click="handleSubmit('formValidate')" :loading="sending">提交
                                 </Button>
                                 <router-link to="/system/auth_group/list">
-                                    <Button type="text">取消 </Button>
+                                    <Button type="text">取消</Button>
                                 </router-link>
                             </Form-item>
                         </div>
@@ -172,372 +175,354 @@
         line-height: 32px;
     }
 </style>
-<script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import {setStore,getStore, sendAjax} from '../../../assets/js/utils'
-  import $ from 'jquery'
+<script>
+    import WrapperContent from '@/components/wrapper-content.vue'
+    import {setStore} from '@/assets/js/storage'
+    import {getFullGroupOne, getAllAuthMenuList, getAllAuthGroupList, editGroup} from "@/api/system";
+    import {getUserMenu, getUserAuth} from "@/api/user";
+    import {mapState} from 'vuex'
 
-  export default {
-    components: {
-      WrapperContent
-    },
-    data() {
-      return {
-        menu_list_format: [],
-        menu_list: [],
-        menu_model_list: JSON.parse(getStore('menu_model_list_all')),
-        auth_list: [],
-        select_all_menu: [],
-        select_all_auth: [],
-        top_menu_list: [],
-        top_auth_list: false,
-        formValidate: {
-          id: 0,
-          group_title: '',
-          group_desc: '',
-          status: 1,
-          menus: [],
-          rules: []
+    import $ from 'jquery'
+
+    export default {
+        components: {
+            WrapperContent
         },
-        sending: false,
-        ruleValidate: {
-          group_title: [
-            {required: true, message: '组名不能为空', trigger: 'blur'}
-          ],
-          group_desc: [
-            {required: true, message: '描述不能为空', trigger: 'blur'}
-          ]
-        }
-      }
-    },
-    created: function () {
-      let app = this
-      sendAjax({
-        url: 'System_AuthGroup.getFullGroupOne',
-        data: {id: app.$route.params.id},
-        success: function (res) {
-          const rules = res.data.rules
-          const menus = res.data.menus
-          if (rules) {
-            app.formValidate.rules = rules.split(",")
-          }
-          if (menus) {
-            app.formValidate.menus = menus.split(",")
-          }
-          app.formValidate.group_title = res.data.title
-          app.formValidate.group_desc = res.data.desc
-          app.formValidate.id = res.data.id
-          app.formValidate.status = res.data.status
-        }
-      });
-      sendAjax({
-        url: 'System_AuthMenu.getAllList',
-        success: function (res) {
-          let list_format = []
-          let menu_model_list = app.menu_model_list
-          app.menu_list = res.data.list
-          let menu_list = app.menu_list
-          console.log(app.menu_model_list)
-          if (menu_model_list) {
-            $.each(menu_model_list, function (k, v) {
-              list_format.push(v)
-            })
-            $.each(list_format, function (k, v) {
-              v.nextItem = []
-            })
-          }
-          if (menu_list) {
-            $.each(menu_list, function (k1, v1) {
-              $.each(list_format, function (k2, v2) {
-                if (v1.model == v2.name) {
-                  v2.nextItem.push(v1)
+        data() {
+            return {
+                menu_list_format: [],
+                menu_list: [],
+                auth_list: [],
+                select_all_menu: [],
+                select_all_auth: [],
+                top_menu_list: [],
+                top_auth_list: false,
+                formValidate: {
+                    id: 0,
+                    group_title: '',
+                    group_desc: '',
+                    status: 1,
+                    menus: [],
+                    rules: []
+                },
+                sending: false,
+                ruleValidate: {
+                    group_title: [
+                        {required: true, message: '组名不能为空', trigger: 'blur'}
+                    ],
+                    group_desc: [
+                        {required: true, message: '描述不能为空', trigger: 'blur'}
+                    ]
                 }
-              })
-//          list_format[v.model].nextItem.push(v)
-            })
-          }
-          app.menu_list_format = list_format
-        }
-      })
-      sendAjax({
-        url: 'System_AuthGroup.getAllList',
-        success: function (res) {
-          app.auth_list = res.data.list
-        }
-      })
-    },
-    methods: {
-      menuSelectAll() {
-        let app = this
-        let items = app.menu_list_format
-        if (app.select_all_menu.length > 0 ) {
-          app.select_all_menu = []
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              app.menuSelect(v.id,false)
-            })
-          }
-        } else {
-          app.select_all_menu.push(1)
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              app.menuSelect(v.id,true)
-            })
-          }
-        }
-      },
-      menuSelect(menu_id, select_all) {
-        let app = this
-        let items = null
-        const is_in = $.inArray(menu_id, app.top_menu_list)
-        $.each(app.menu_list_format, function (k, v) {
-          if (v.id == menu_id) {
-            items = v.nextItem
-            return false
-          }
-        })
-        if(select_all === false) {
-          if (is_in !== -1) {
-            app.top_menu_list.splice(is_in, 1)
-          }
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              app.secMenuSelect(v.id, menu_id,false)
-            })
-          }
-        }else if(select_all === true){
-          if (is_in === -1) {
-            app.top_menu_list.push(menu_id)
-          }
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              app.secMenuSelect(v.id, menu_id,true)
-            })
-          }
-        }else{
-          if (is_in !== -1) {
-            app.top_menu_list.splice(is_in, 1)
-            if (items.length > 0) {
-              $.each(items, function (k, v) {
-                app.secMenuSelect(v.id, menu_id,false)
-              })
             }
-          } else {
-            app.top_menu_list.push(menu_id)
-            if (items.length > 0) {
-              $.each(items, function (k, v) {
-                app.secMenuSelect(v.id, menu_id,true)
-              })
-            }
-          }
-        }
-      },
-      secMenuSelect(menu_id, pid, select_all) {
-        let app = this
-        let items = null
-        const is_in = $.inArray(menu_id, app.formValidate.menus)
-        $.each(app.menu_list_format, function (k, v) {
-          if (v.id == pid) {
-            items = v.nextItem
-            return false
-          }
-        })
-        if (items.length > 0) {
-          $.each(items, function (k, v) {
-            if (v.id == menu_id) {
-              items = v.nextItem
-              return false
-            }
-          })
-        }
-        if(select_all === false){
-          if (is_in !== -1) {
-            app.formValidate.menus.splice(is_in, 1)
-          }
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              const index = $.inArray(v.id, app.formValidate.menus)
-              if (index !== -1) {
-                app.formValidate.menus.splice(index, 1)
-              }
-            })
-          }
-        }else if(select_all === true){
-          if (is_in === -1) {
-            app.formValidate.menus.push(menu_id)
-          }
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              const index = $.inArray(v.id, app.formValidate.menus)
-              if (index === -1) {
-                app.formValidate.menus.push(v.id)
-              }
-            })
-          }
-        }else{
-          if (is_in !== -1) {
-            app.formValidate.menus.splice(is_in, 1)
-            if (items.length > 0) {
-              $.each(items, function (k, v) {
-                const index = $.inArray(v.id, app.formValidate.menus)
-                if (index !== -1) {
-                  app.formValidate.menus.splice(index, 1)
+        },
+        created: function () {
+            let app = this;
+            getFullGroupOne(app.$route.params.id).then(res => {
+                const rules = res.data.rules;
+                const menus = res.data.menus;
+                if (rules) {
+                    app.formValidate.rules = rules.split(",")
                 }
-              })
-            }
-          } else {
-            app.formValidate.menus.push(menu_id)
-            if (items.length > 0) {
-              $.each(items, function (k, v) {
-                const index = $.inArray(v.id, app.formValidate.menus)
-                if (index === -1) {
-                  app.formValidate.menus.push(v.id)
+                if (menus) {
+                    app.formValidate.menus = menus.split(",")
                 }
-              })
-            }
-          }
-        }
-      },
-      authSelectAll() {
-        let app = this
-        let items = app.auth_list
-        if (app.select_all_auth.length > 0 ) {
-          app.select_all_auth = []
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              app.authSelect(v.id,false)
-            })
-          }
-        } else {
-          app.select_all_auth.push(1)
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              app.authSelect(v.id,true)
-            })
-          }
-        }
-      },
-      authSelect(auth_id,select_all) {
-        let app = this
-        let items = null
-        const is_in = $.inArray(auth_id, app.formValidate.rules)
-        $.each(app.auth_list, function (k, v) {
-          if (v.id == auth_id) {
-            items = v.nextItem
-            return false
-          }
-        })
-        if(select_all === false){
-          if (is_in !== -1) {
-            app.formValidate.rules.splice(is_in, 1)
-          }
-          
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              const index = $.inArray(v.id, app.formValidate.rules)
-              if (index !== -1) {
-                app.formValidate.rules.splice(index, 1)
-              }
-            })
-          }
-        }else if(select_all === true){
-          if (is_in === -1) {
-            app.formValidate.rules.push(auth_id)
-          }
-          if (items.length > 0) {
-            $.each(items, function (k, v) {
-              const index = $.inArray(v.id, app.formValidate.rules)
-              if (index === -1) {
-                app.formValidate.rules.push(v.id)
-              }
-            })
-          }
-        }else{
-          if (is_in !== -1) {
-            app.formValidate.rules.splice(is_in, 1)
-            if (items.length > 0) {
-              $.each(items, function (k, v) {
-                const index = $.inArray(v.id, app.formValidate.rules)
-                if (index !== -1) {
-                  app.formValidate.rules.splice(index, 1)
+                app.formValidate.group_title = res.data.title;
+                app.formValidate.group_desc = res.data.desc;
+                app.formValidate.id = res.data.id;
+                app.formValidate.status = res.data.status
+            });
+            getAllAuthMenuList().then(res => {
+                let list_format = [];
+                let menu_model_list = app.menu_model_list;
+                app.menu_list = res.data.list;
+                let menu_list = app.menu_list;
+                console.log(app.menu_model_list);
+                if (menu_model_list) {
+                    $.each(menu_model_list, function (k, v) {
+                        list_format.push(v)
+                    });
+                    $.each(list_format, function (k, v) {
+                        v.nextItem = []
+                    })
                 }
-              })
-            }
-          } else {
-            app.formValidate.rules.push(auth_id)
-            if (items.length > 0) {
-              $.each(items, function (k, v) {
-                const index = $.inArray(v.id, app.formValidate.rules)
-                if (index === -1) {
-                  app.formValidate.rules.push(v.id)
+                if (menu_list) {
+                    $.each(menu_list, function (k1, v1) {
+                        $.each(list_format, function (k2, v2) {
+                            if (v1.model == v2.name) {
+                                v2.nextItem.push(v1)
+                            }
+                        })
+                    })
                 }
-              })
-            }
-          }
-        }
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if (valid) {
-            let app = this
-            let send_data = {
-              id: this.formValidate.id,
-              title: this.formValidate.group_title,
-              desc: this.formValidate.group_desc,
-              status: this.formValidate.status,
-              menus: JSON.stringify(this.formValidate.menus),
-              rules: JSON.stringify(this.formValidate.rules)
-            }
-            if (!send_data.title || send_data.title === '') {
-              app.$Message.warning('请输入名称');
-              return false;
-            }
-            this.sending = true
-            let option = {
-              url: 'System_AuthGroup.editGroup', method: 'post',
-              data: send_data,
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning(msg);
-                } else {
-                  app.$store.state.list_reload = true;
-                  app.$Message.success('修改成功');
-
-                  sendAjax({  //获取菜单资源
-                    url: 'User_User.getUserMenu',
-                    success: function (res) {
-                      setStore('menu_list', res.data.menu_list)
-                      setStore('menu_list_old', res.data.menu_list_old)
-                      setStore('menu_model_list', res.data.menu_model_list)
-                      setStore('menu_model_list_all', res.data.menu_model_list_all)
-                      setStore('menu_model', res.data.menu_model_list[0]['id'])
-                      app.$store.state.menu_data.menu_list = res.data.menu_list
-                      app.$store.state.menu_data.menu_list_old = res.data.menu_list_old
-                      app.$store.state.menu_data.menu_model_list = res.data.menu_model_list
-                      app.$store.state.menu_data.menu_model_list_all = res.data.menu_model_list_all
-                      app.$store.state.menu_model = res.data.menu_model_list[0]['id']
-                      sendAjax({   //获取权限资源
-                        url: 'User_User.getUserAuth',
-                        success: function (res) {
-                          setStore('auth_list', res.data)
-                        }
-                      })
+                app.menu_list_format = list_format
+            });
+            getAllAuthGroupList().then(res => {
+                app.auth_list = res.data.list
+            });
+        },
+        computed:{
+            ...mapState({
+                menu_model_list: stata => stata.menu.menu_data.menu_model_list_all
+            })
+        },
+        methods: {
+            menuSelectAll() {
+                let app = this;
+                let items = app.menu_list_format;
+                if (app.select_all_menu.length > 0) {
+                    app.select_all_menu = [];
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            app.menuSelect(v.id, false)
+                        })
                     }
-                  });
-
-                  app.$router.push('/system/auth_group/list')
+                } else {
+                    app.select_all_menu.push(1);
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            app.menuSelect(v.id, true)
+                        })
+                    }
                 }
-                app.sending = false;
-              }, fail: function (res) {
-                app.sending = false;
-              }
+            },
+            menuSelect(menu_id, select_all) {
+                let app = this;
+                let items = null;
+                const is_in = $.inArray(menu_id, app.top_menu_list);
+                $.each(app.menu_list_format, function (k, v) {
+                    if (v.id == menu_id) {
+                        items = v.nextItem;
+                        return false
+                    }
+                });
+                if (select_all === false) {
+                    if (is_in !== -1) {
+                        app.top_menu_list.splice(is_in, 1)
+                    }
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            app.secMenuSelect(v.id, menu_id, false)
+                        })
+                    }
+                } else if (select_all === true) {
+                    if (is_in === -1) {
+                        app.top_menu_list.push(menu_id)
+                    }
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            app.secMenuSelect(v.id, menu_id, true)
+                        })
+                    }
+                } else {
+                    if (is_in !== -1) {
+                        app.top_menu_list.splice(is_in, 1);
+                        if (items.length > 0) {
+                            $.each(items, function (k, v) {
+                                app.secMenuSelect(v.id, menu_id, false)
+                            })
+                        }
+                    } else {
+                        app.top_menu_list.push(menu_id);
+                        if (items.length > 0) {
+                            $.each(items, function (k, v) {
+                                app.secMenuSelect(v.id, menu_id, true)
+                            })
+                        }
+                    }
+                }
+            },
+            secMenuSelect(menu_id, pid, select_all) {
+                let app = this;
+                let items = null;
+                const is_in = $.inArray(menu_id, app.formValidate.menus);
+                $.each(app.menu_list_format, function (k, v) {
+                    if (v.id == pid) {
+                        items = v.nextItem;
+                        return false
+                    }
+                });
+                if (items.length > 0) {
+                    $.each(items, function (k, v) {
+                        if (v.id == menu_id) {
+                            items = v.nextItem;
+                            return false
+                        }
+                    })
+                }
+                if (select_all === false) {
+                    if (is_in !== -1) {
+                        app.formValidate.menus.splice(is_in, 1)
+                    }
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            const index = $.inArray(v.id, app.formValidate.menus);
+                            if (index !== -1) {
+                                app.formValidate.menus.splice(index, 1)
+                            }
+                        })
+                    }
+                } else if (select_all === true) {
+                    if (is_in === -1) {
+                        app.formValidate.menus.push(menu_id)
+                    }
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            const index = $.inArray(v.id, app.formValidate.menus);
+                            if (index === -1) {
+                                app.formValidate.menus.push(v.id)
+                            }
+                        })
+                    }
+                } else {
+                    if (is_in !== -1) {
+                        app.formValidate.menus.splice(is_in, 1);
+                        if (items.length > 0) {
+                            $.each(items, function (k, v) {
+                                const index = $.inArray(v.id, app.formValidate.menus);
+                                if (index !== -1) {
+                                    app.formValidate.menus.splice(index, 1)
+                                }
+                            })
+                        }
+                    } else {
+                        app.formValidate.menus.push(menu_id);
+                        if (items.length > 0) {
+                            $.each(items, function (k, v) {
+                                const index = $.inArray(v.id, app.formValidate.menus);
+                                if (index === -1) {
+                                    app.formValidate.menus.push(v.id)
+                                }
+                            })
+                        }
+                    }
+                }
+            },
+            authSelectAll() {
+                let app = this;
+                let items = app.auth_list;
+                if (app.select_all_auth.length > 0) {
+                    app.select_all_auth = [];
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            app.authSelect(v.id, false)
+                        })
+                    }
+                } else {
+                    app.select_all_auth.push(1);
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            app.authSelect(v.id, true)
+                        })
+                    }
+                }
+            },
+            authSelect(auth_id, select_all) {
+                let app = this;
+                let items = null;
+                const is_in = $.inArray(auth_id, app.formValidate.rules);
+                $.each(app.auth_list, function (k, v) {
+                    if (v.id == auth_id) {
+                        items = v.nextItem;
+                        return false
+                    }
+                });
+                if (select_all === false) {
+                    if (is_in !== -1) {
+                        app.formValidate.rules.splice(is_in, 1)
+                    }
+
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            const index = $.inArray(v.id, app.formValidate.rules);
+                            if (index !== -1) {
+                                app.formValidate.rules.splice(index, 1)
+                            }
+                        })
+                    }
+                } else if (select_all === true) {
+                    if (is_in === -1) {
+                        app.formValidate.rules.push(auth_id)
+                    }
+                    if (items.length > 0) {
+                        $.each(items, function (k, v) {
+                            const index = $.inArray(v.id, app.formValidate.rules);
+                            if (index === -1) {
+                                app.formValidate.rules.push(v.id)
+                            }
+                        })
+                    }
+                } else {
+                    if (is_in !== -1) {
+                        app.formValidate.rules.splice(is_in, 1);
+                        if (items.length > 0) {
+                            $.each(items, function (k, v) {
+                                const index = $.inArray(v.id, app.formValidate.rules);
+                                if (index !== -1) {
+                                    app.formValidate.rules.splice(index, 1)
+                                }
+                            })
+                        }
+                    } else {
+                        app.formValidate.rules.push(auth_id);
+                        if (items.length > 0) {
+                            $.each(items, function (k, v) {
+                                const index = $.inArray(v.id, app.formValidate.rules);
+                                if (index === -1) {
+                                    app.formValidate.rules.push(v.id)
+                                }
+                            })
+                        }
+                    }
+                }
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        let send_data = {
+                            id: this.formValidate.id,
+                            title: this.formValidate.group_title,
+                            desc: this.formValidate.group_desc,
+                            status: this.formValidate.status,
+                            menus: JSON.stringify(this.formValidate.menus),
+                            rules: JSON.stringify(this.formValidate.rules)
+                        };
+                        if (!send_data.title || send_data.title === '') {
+                            app.$Message.warning('请输入名称');
+                            return false;
+                        }
+                        this.sending = true;
+                        editGroup(send_data).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg);
+                            } else {
+                                app.$store.state.list_reload = true;
+                                app.$Message.success('修改成功');
+                                getUserMenu().then(user_menu => {
+                                    const menu = {
+                                        menu_list: user_menu.data.menu_list,
+                                        menu_list_old: user_menu.data.menu_list_old,
+                                        menu_model_list: user_menu.data.menu_model_list,
+                                        menu_model_list_all: user_menu.data.menu_model_list_all,
+                                        menu_model: user_menu.data.menu_model_list[0]['id'],
+                                    };
+                                    app.$store.dispatch('UPDATE_MENU_DATA', menu);
+                                    const menu_model_list = user_menu.data.menu_model_list;
+                                    getUserAuth().then(auth => {
+                                        app.sending = false;
+                                        setStore('auth_list', auth.data);
+                                    });
+                                });
+                                app.$router.push('/system/auth_group/list')
+                            }
+                            app.sending = false;
+                        });
+                    }
+                })
             }
-            sendAjax(option)
-          }
-        })
-      }
+        }
     }
-  }
 </script>

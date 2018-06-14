@@ -14,11 +14,14 @@
                             <Input v-model="formValidate.title" type="text" style="width: 500px" placeholder="菜单显示的名称"/>
                         </FormItem>
                         <FormItem label="名称" prop="name">
-                            <Input v-model="formValidate.name" type="text" style="width: 500px" placeholder="菜单的唯一标记，不可重复"/>
+                            <Input v-model="formValidate.name" type="text" style="width: 500px"
+                                   placeholder="菜单的唯一标记，不可重复"/>
                         </FormItem>
                         <FormItem label="模块" prop="model">
                             <Select v-model="formValidate.model" placeholder="请选择" style="width: 500px">
-                                <Option :value="model.name" v-for="(model,index) in menu_model" :key="index">{{ model.title }}</Option>
+                                <Option :value="model.name" v-for="(model,index) in menu_model" :key="index">{{
+                                    model.title }}
+                                </Option>
                             </Select>
                         </FormItem>
                         <FormItem label="路径" prop="path">
@@ -28,13 +31,14 @@
                             <Input v-model="formValidate.icon" type="text" style="width: 500px"/>
                         </FormItem>
                         <FormItem label="排序" prop="sort">
-                            <Input v-model="formValidate.sort" type="text" style="width: 500px" placeholder="菜单排序，数值越大越靠前"/>
+                            <Input v-model="formValidate.sort" type="text" style="width: 500px"
+                                   placeholder="菜单排序，数值越大越靠前"/>
                         </FormItem>
                         <FormItem label="上级">
                             用户列表
                         </FormItem>
                         <FormItem label="描述" prop="desc">
-                            <Input v-model="formValidate.desc"  type="textarea" style="width: 500px"/>
+                            <Input v-model="formValidate.desc" type="textarea" style="width: 500px"/>
                         </FormItem>
                         <FormItem label="状态" prop="status">
                             <RadioGroup v-model="formValidate.status">
@@ -58,82 +62,74 @@
     </div>
 </template>
 <script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import {getStore, sendAjax} from '../../../assets/js/utils'
-  import $ from 'jquery'
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {addMenu,getAllMenuModelList} from "@/api/system";
 
-  export default {
-    components: {
-      WrapperContent
-    },
-    data() {
-      return {
-        menu_model: [],
-        formValidate: {
-          title: '',
-          name: '',
-          path: '',
-          sort: 0,
-          icon: '',
-          pid: this.$route.query.pid,
-          desc: '',
-          model: '',
-          status: 1,
+
+    export default {
+        components: {
+            WrapperContent
         },
-        model_list: ['user','system'],
-        sending: false,
-        ruleValidate: {
-          title: [
-            {required: true, message: '菜单标题不能为空', trigger: 'blur'}
-          ],
-          name: [
-            {required: true, message: '菜单名称不能为空', trigger: 'blur'}
-          ],
-          model: [
-            {required: true, message: '菜单模块不能为空', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    created (){
-      let app = this
-      app.$Loading.start()
-      sendAjax({
-        url: 'System_MenuModel.getAllList',
-        success: function (res) {
-          app.$Loading.finish()
-          app.menu_model = res.data.list
-        }
-      });
-    },
-    methods: {
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if(valid) {
-            let app = this
-            this.sending = true
-            let option = {
-              url: 'System_AuthMenu.addMenu', method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret
-                const msg = res.msg
-                if (code !== 200) {
-                  app.$Message.warning(msg)
-                } else {
-                  app.$store.state.list_reload = true
-                  app.$Message.success('新增成功')
-                  app.$router.push({path:'/system/auth_menu/list',query:app.$route.query})
+        data() {
+            return {
+                menu_model: [],
+                formValidate: {
+                    title: '',
+                    name: '',
+                    path: '',
+                    sort: 0,
+                    icon: '',
+                    pid: this.$route.query.pid,
+                    desc: '',
+                    model: '',
+                    status: 1,
+                },
+                model_list: ['user', 'system'],
+                sending: false,
+                ruleValidate: {
+                    title: [
+                        {required: true, message: '菜单标题不能为空', trigger: 'blur'}
+                    ],
+                    name: [
+                        {required: true, message: '菜单名称不能为空', trigger: 'blur'}
+                    ],
+                    model: [
+                        {required: true, message: '菜单模块不能为空', trigger: 'blur'}
+                    ],
                 }
-                app.sending = false;
-              }, fail: function (res) {
-                app.sending = false;
-              }
             }
-            sendAjax(option)
-          }
-        })
-      },
+        },
+        created() {
+            let app = this;
+            app.$Loading.start();
+            getAllMenuModelList().then(res=>{
+                app.$Loading.finish();
+                app.menu_model = res.data.list
+            });
+        },
+        methods: {
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.sending = true;
+                        addMenu(app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg)
+                            } else {
+                                app.$store.dispatch('SET_LIST_RELOAD',true);
+                                app.$Message.success('新增成功');
+                                app.$router.push({path: '/system/auth_menu/list', query: app.$route.query})
+                            }
+                            app.sending = false;
+                        }).catch(res=>{
+                            app.sending = false;
+                        });
+                    }
+                })
+            },
+        }
     }
-  }
 </script>

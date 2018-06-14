@@ -20,7 +20,7 @@
                             {{ parent_title }}
                         </FormItem>
                         <FormItem label="描述" prop="desc">
-                            <Input v-model="formValidate.desc"  type="textarea" style="width: 500px"/>
+                            <Input v-model="formValidate.desc" type="textarea" style="width: 500px"/>
                         </FormItem>
                         <FormItem label="状态" prop="status">
                             <RadioGroup v-model="formValidate.status">
@@ -43,81 +43,83 @@
         </wrapper-content>
     </div>
 </template>
-<script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import {getStore, sendAjax} from '../../../assets/js/utils'
-  import $ from 'jquery'
+<script>
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {getRule, editRule} from "@/api/system";
 
-  export default {
-    components: {
-      WrapperContent
-    },
-    data() {
-      return {
-        formValidate: {
-          id: 0,
-          title: '',
-          name: '',
-          pid: 0,
-          desc: '',
-          status: 1,
+
+    export default {
+        components: {
+            WrapperContent
         },
-        parent_title: '',
-        sending: false,
-        ruleValidate: {
-          title: [
-            {required: true, message: '权限标题不能为空', trigger: 'blur'}
-          ],
-          name: [
-            {required: true, message: '权限名称不能为空', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    created (){
-      let app = this
-      sendAjax({
-        url: 'System_AuthRule.getRule',
-        data: {id: app.$route.params.id},
-        success: function (res) {
-          app.parent_title = res.data.parent_title
-          app.formValidate.id = res.data.id
-          app.formValidate.title = res.data.title
-          app.formValidate.name = res.data.name
-          app.formValidate.pid = res.data.pid
-          app.formValidate.desc = res.data.rule_desc
-          app.formValidate.status = res.data.status
-        }
-      });
-    },
-    methods: {
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if(valid) {
-            let app = this
-            this.sending = true
-            let option = {
-              url: 'System_AuthRule.editRule', method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret
-                const msg = res.msg
-                if (code !== 200) {
-                  app.$Message.warning(msg)
-                } else {
-                  app.$store.state.list_reload = true
-                  app.$Message.success('编辑成功')
-                  app.$router.push({path:'/system/auth_rule/list'})
+        data() {
+            return {
+                formValidate: {
+                    id: 0,
+                    title: '',
+                    name: '',
+                    pid: 0,
+                    desc: '',
+                    status: 1,
+                },
+                parent_title: '',
+                sending: false,
+                ruleValidate: {
+                    title: [
+                        {required: true, message: '权限标题不能为空', trigger: 'blur'}
+                    ],
+                    name: [
+                        {required: true, message: '权限名称不能为空', trigger: 'blur'}
+                    ],
                 }
-                app.sending = false;
-              }, fail: function (res) {
-                app.sending = false;
-              }
             }
-            sendAjax(option)
-          }
-        })
-      },
+        },
+        created() {
+            let app = this;
+            getRule(app.$route.params.id).then(res => {
+                app.parent_title = res.data.parent_title;
+                app.formValidate.id = res.data.id;
+                app.formValidate.title = res.data.title;
+                app.formValidate.name = res.data.name;
+                app.formValidate.pid = res.data.pid;
+                app.formValidate.desc = res.data.rule_desc;
+                app.formValidate.status = res.data.status
+            });
+        },
+        methods: {
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.sending = true;
+                        editRule(app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg)
+                            } else {
+                                app.$store.state.list_reload = true;
+                                app.$Message.success('编辑成功');
+                                app.$router.push({path: '/system/auth_rule/list'})
+                            }
+                            app.sending = false;
+
+                        }).catch(res => {
+
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg)
+                            } else {
+                                app.$store.state.list_reload = true;
+                                app.$Message.success('编辑成功');
+                                app.$router.push({path: '/system/auth_rule/list'})
+                            }
+                            app.sending = false;
+                        });
+                    }
+                })
+            },
+        }
     }
-  }
 </script>

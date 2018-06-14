@@ -4,15 +4,19 @@
             <div class="data-content">
                 <div class="table-edit">
                     <div class="left-actions">
-                        <Button permission="Team_Team.addTeam" @click="form_modal = !form_modal,form_action = 'add'"  type="primary" shape="circle" icon="plus">
+                        <Button permission="Team_Team.addTeam" @click="form_modal = !form_modal,form_action = 'add'"
+                                type="primary" shape="circle" icon="plus">
                             创建团队
                         </Button>
-                        <Button v-if="prev_ids.length > 0" type="ghost" shape="circle" icon="arrow-return-left" @click="returnBack()">
+                        <Button v-if="prev_ids.length > 0" type="ghost" shape="circle" icon="arrow-return-left"
+                                @click="returnBack()">
                             返回上一级
                         </Button>
                     </div>
                     <div class="right-actions">
-                        <Button @click="del_model = true" type="ghost" shape="circle" :disabled="select_teams.length <= 0">删除团队</Button>
+                        <Button @click="del_model = true" type="ghost" shape="circle"
+                                :disabled="select_teams.length <= 0">删除团队
+                        </Button>
                         <div class="search-input">
                             <Input v-model="keyword" icon="ios-search-strong" placeholder="搜索"/>
                         </div>
@@ -67,7 +71,7 @@
                         </Option>
                     </Select>
                 </Form-item>
-                
+
                 <Form-item prop="state">
                     <RadioGroup v-model="formValidate.state">
                         <Radio label="1">启用</Radio>
@@ -90,7 +94,7 @@
                 title="操作提示">
             <p>真的要删除当前选中项吗？一旦删除将无法恢复，请想好了再决定 </p>
             <div slot="footer">
-                <Button type="text"  @click="del_model = false">取消</Button>
+                <Button type="text" @click="del_model = false">取消</Button>
                 <Button type="error" :loading="send_loading" @click="delConfirm">删了</Button>
             </div>
         </Modal>
@@ -100,349 +104,295 @@
 
     </div>
 </template>
-<script type="es6">
-  import WrapperContent from '../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../assets/js/utils'
-  import $ from 'jquery'
-  import _ from 'lodash'
+<script>
+    import WrapperContent from '../../components/wrapper-content.vue'
+    import {getList, getInfo, doTeam, delTeam,changeState} from "@/api/team";
+    import $ from 'jquery'
+    import _ from 'lodash'
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        form_modal: false,
-        form_action: 'add',
-        form_title: '添加新团队',
-        form_url: 'Team_Team.addTeam',
-        form_submit: '添加',
-        formValidate: {
-          team_id: 0,
-          team_name: '',
-          state: 1,
+    export default {
+        components: {
+            WrapperContent,
         },
-        ruleValidate: {
-          team_name: [
-            {required: true, message: '团队名称不能为空', trigger: 'blur'}
-          ],
+        data() {
+            return {
+                self: this,
+                form_modal: false,
+                form_action: 'add',
+                form_title: '添加新团队',
+                form_url: 'add',
+                form_submit: '添加',
+                formValidate: {
+                    team_id: 0,
+                    team_name: '',
+                    state: 1,
+                },
+                ruleValidate: {
+                    team_name: [
+                        {required: true, message: '团队名称不能为空', trigger: 'blur'}
+                    ],
+                },
+                del_model: false,
+                select_teams: [],
+                send_loading: false,
+                page_size: 10,
+                page_num: 1,
+                pid: 0,
+                prev_ids: [],
+                prev_titles: [],
+                keyword: '',
+                loading: true,
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
+                    },
+                    {
+                        title: '团队名称',
+                        key: 'team_name',
+                        render: (h, params) => {
+                            return h('router-link', {
+                                attrs: {
+                                    to: '/team/user/list/' + params.row.id + '?parent_name=' + params.row.team_name
+                                }
+                            }, params.row.team_name);
+                        }
+                    },
+                    {
+                        title: '隶属团队',
+                        key: 'parent_info',
+                        render: (h, params) => {
+                            if (params.row.pid > 0) {
+                                return params.row.parent_info.team_name
+                            }
+                            return '无'
+                        }
+                    },
+                    {
+                        title: '创建时间',
+                        key: 'create_time',
+                    },
+                    {
+                        title: '状态',
+                        key: 'state',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('i-switch', {
+                                    props: {
+                                        value: params.row.state == 1 ? true : false
+                                    },
+                                    on: {
+                                        'on-change': () => {
+                                            this.changeState(params.row.id, params.row.state, params.index)
+                                        }
+                                    },
+                                }),
+                            ]);
+                        }
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        align: 'center',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Tooltip', {
+                                    props: {
+                                        content: '编辑',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'compose',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.id)
+                                            }
+                                        }
+                                    })
+                                ]),
+                                h('Tooltip', {
+                                    props: {
+                                        content: '下级',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'pinpoint',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.nextItem(params.row.id, params.row.pid, params.row.team_name)
+                                            }
+                                        }
+                                    })
+                                ])
+                            ])
+                        }
+                    },
+                ],
+                team_list: [],
+                pid_team_list: [],
+                teamCount: 0,
+            }
         },
-        del_model: false,
-        select_teams: [],
-        send_loading: false,
-        page_size: 10,
-        page_num: 1,
-        pid: 0,
-        prev_ids: [],
-        prev_titles: [],
-        keyword: '',
-        loading: true,
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '团队名称',
-            key: 'team_name',
-            render: (h, params) => {
-              return h('router-link', {
-                attrs: {
-                  to: '/team/user/list/' + params.row.id + '?parent_name=' + params.row.team_name
-                }
-              },params.row.team_name);
-            }
-          },
-          {
-            title: '隶属团队',
-            key: 'parent_info',
-            render: (h, params) => {
-              if(params.row.pid > 0) {
-                return params.row.parent_info.team_name
-              }
-              return '无'
-            }
-          },
-          {
-            title: '创建时间',
-            key: 'create_time',
-          },
-          {
-            title: '状态',
-            key: 'state',
-            render: (h, params) => {
-              return h('div', [
-                h('i-switch', {
-                  props: {
-                    value: params.row.state == 1 ? true : false
-                  },
-                  on: {
-                    'on-change': () => {
-                      this.changeState(params.row.id, params.row.state, params.index)
-                    }
-                  },
-                }),
-              ]);
-            }
-          },
-          {
-            title: '操作',
-            key: 'action',
-            align: 'center',
-            render: (h, params) => {
-              return h('div',[
-                h('Tooltip',{
-                  props: {
-                    content: '编辑',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'compose',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.id)
-                      }
-                    }
-                  })
-                ]),
-                h('Tooltip',{
-                  props: {
-                    content: '下级',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'pinpoint',
-                      size: '16'
-                    },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.nextItem(params.row.id,params.row.pid,params.row.team_name)
-                      }
-                    }
-                  })
-                ])
-              ])
-            }
-          },
-        ],
-        team_list: [],
-        pid_team_list: [],
-        teamCount: 0,
-      }
-    },
-    watch: {
-      form_action: function (value) {
-        if(value == 'add'){
-          this.form_title = '添加新团队'
-          this.form_submit = '添加'
-          this.form_url = 'Team_Team.addTeam'
-        }else{
-          this.form_title = '编辑团队'
-          this.form_submit = '保存'
-          this.form_url = 'Team_Team.editTeam'
-        }
-      },
-      form_modal: function (value) {
-        if(value === false) {
-          this.formValidate = {
-            team_id: 0,
-            team_name: '',
-            state: 1,
-          }
-        }
-      },
-      keyword: function (newQuestion) {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getTeamList()
-        }
-      }
-    },
-    created: function () {
-      this.$store.state.menu_top = true
-      this.$store.state.menu_slide = true
-      this.getTeamList()
-    },
-    methods: {
-      getTeamList() {
-        let app = this
-        app.loading = true
-        utils.sendAjax({
-          url: 'Team_Team.getList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            pid: this.pid,
-            keyword: this.keyword
-          },
-          success: function (res) {
-            app.loading = false
-            app.team_list = res.data.list
-            app.teamCount = Number(res.data.count)
-            app.getPidTeamList()
-          }
-        });
-      },
-      getPidTeamList() {
-        let app = this
-        utils.sendAjax({
-          url: 'Team_Team.getList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            pid: -1,
-            keyword: this.keyword
-          },
-          success: function (res) {
-            app.pid_team_list = res.data.list
-          }
-        });
-      },
-      getInfo(){
-        let app = this
-        utils.sendAjax({
-          url: 'Team_Team.getInfo',
-          data: {team_id:  app.formValidate.team_id},
-          success: function (res) {
-            if (res.data) {
-              app.formValidate.team_id = res.data.id
-              app.formValidate.team_name = res.data.team_name
-              app.formValidate.state = res.data.state
-            }
-          }
-        });
-      },
-      editItem (id){
-        this.formValidate.team_id = id
-        this.getInfo()
-        this.form_modal = true
-        this.form_action = 'edit'
-      },
-      nextItem(id,pid,title) {
-        this.page_num = 1
-        this.prev_ids.push(pid)
-        this.prev_titles.push(title)
-        this.pid = id
-        this.getTeamList()
-      },
-      returnBack (){
-        this.pid  = this.prev_ids[this.prev_ids.length - 1]
-        this.prev_ids.splice(this.prev_ids.length - 1,1)
-        this.prev_titles.splice(this.prev_titles.length - 1,1)
-        this.getTeamList()
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if(valid) {
-            let app = this
-            this.send_loading = true
-            let option = {
-              url: app.form_url, method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning(msg);
+        watch: {
+            form_action: function (value) {
+                if (value == 'add') {
+                    this.form_title = '添加新团队';
+                    this.form_submit = '添加';
+                    this.form_url = 'add'
                 } else {
-                  app.form_modal = false
-                  app.$Message.success('操作成功')
-                  app.getTeamList()
+                    this.form_title = '编辑团队';
+                    this.form_submit = '保存';
+                    this.form_url = 'edit'
                 }
-                app.send_loading = false;
-              }, fail: function (res) {
-                app.send_loading = false;
-              }
+            },
+            form_modal: function (value) {
+                if (value === false) {
+                    this.formValidate = {
+                        team_id: 0,
+                        team_name: '',
+                        state: 1,
+                    }
+                }
+            },
+            keyword: function (newQuestion) {
+                this.search()
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getTeamList()
+                }
             }
-            utils.sendAjax(option)
-          }
-        })
-      },
-      delConfirm (){
-        this.delItem()
-      },
-      delItem(){
-        let app = this
-        app.send_loading = true
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'Team_Team.delTeam',
-          data: {
-            ids: JSON.stringify(app.select_teams),
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.del_model = false
-            if(res.ret == 200){
-              app.$Message.success('删除成功');
-              app.getTeamList()
-            }else{
-              app.$Message.warning(res.msg);
-            }
-          }
-        });
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getTeamList()
         },
-        // 这是我们为团队停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_teams = []
-        $.each(selection, function (k, v) {
-          app.select_teams.push(v.id)
-        });
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getTeamList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getTeamList()
-      },
-      reloadList() {
-        this.getTeamList(1, this.page_size)
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      changeState(id, state, index) {
-        let app = this
-        const change_state = state == 1 ? 0 : 1
-        utils.sendAjax({
-          url: 'Team_Team.changeState',
-          data: {
-            user_id: id,
-            state: state == 1 ? 0 : 1
-          },
-          success: function (res) {
-            app.team_list[index].state = change_state
-          }
-        });
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
+        created: function () {
+            this.$store.dispatch('UPDATE_MENU_TOP', true);
+            this.$store.dispatch('UPDATE_MENU_SLIDE', true);
+            this.getTeamList()
+        },
+        methods: {
+            getTeamList() {
+                let app = this;
+                app.loading = true;
+                getList(app.pid, app.page_size, app.page_num, app.keyword).then(res => {
+                    app.loading = false;
+                    app.team_list = res.data.list;
+                    app.teamCount = Number(res.data.count);
+                    getList(-1, app.page_size, app.page_num, app.keyword).then(res => {
+                        app.pid_team_list = res.data.list
+                    })
+                });
+            },
+            getInfo() {
+                let app = this;
+                getInfo(app.formValidate.team_id).then(res => {
+                    if (res.data) {
+                        app.formValidate.team_id = res.data.id;
+                        app.formValidate.team_name = res.data.team_name;
+                        app.formValidate.state = res.data.state
+                    }
+                });
+            },
+            editItem(id) {
+                this.formValidate.team_id = id;
+                this.getInfo();
+                this.form_modal = true;
+                this.form_action = 'edit'
+            },
+            nextItem(id, pid, title) {
+                this.page_num = 1;
+                this.prev_ids.push(pid);
+                this.prev_titles.push(title);
+                this.pid = id;
+                this.getTeamList()
+            },
+            returnBack() {
+                this.pid = this.prev_ids[this.prev_ids.length - 1];
+                this.prev_ids.splice(this.prev_ids.length - 1, 1);
+                this.prev_titles.splice(this.prev_titles.length - 1, 1);
+                this.getTeamList()
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.send_loading = true;
+                        doTeam(app.form_url, app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning(msg);
+                            } else {
+                                app.form_modal = false;
+                                app.$Message.success('操作成功');
+                                app.getTeamList()
+                            }
+                            app.send_loading = false;
+                        });
+                    }
+                })
+            },
+            delConfirm() {
+                this.delItem()
+            },
+            delItem() {
+                let app = this;
+                app.send_loading = true;
+                delTeam(JSON.stringify(app.select_teams)).then(res => {
+                    app.send_loading = false;
+                    app.del_model = false;
+                    if (res.ret === 200) {
+                        app.$Message.success('删除成功');
+                        app.getTeamList()
+                    } else {
+                        app.$Message.warning(res.msg);
+                    }
+                });
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getTeamList()
+                },
+                // 这是我们为团队停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_teams = [];
+                $.each(selection, function (k, v) {
+                    app.select_teams.push(v.id)
+                });
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getTeamList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getTeamList()
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            },
+            changeState(id, state, index) {
+                let app = this;
+                const change_state = state == 1 ? 0 : 1;
+                changeState(id,state == 1 ? 0 : 1).then(res => {
+                    app.team_list[index].state = change_state
+                });
+            },
+        }
 
-  }
+    }
 </script>

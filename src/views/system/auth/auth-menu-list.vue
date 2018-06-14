@@ -2,7 +2,8 @@
     <div>
         <wrapper-content pageTitle="菜单列表">
             <div>
-                <span v-for="(title,index) in prev_titles" :key="index">{{ title }} <span v-if="index < prev_titles.length - 1"> > </span></span>
+                <span v-for="(title,index) in prev_titles" :key="index">{{ title }} <span
+                        v-if="index < prev_titles.length - 1"> > </span></span>
             </div>
             <div class="data-content">
                 <div class="table-edit">
@@ -12,12 +13,14 @@
                                 新增菜单
                             </Button>
                         </router-link>
-                        <Button v-if="prev_ids.length > 0" type="ghost" shape="circle" icon="arrow-return-left" @click="returnBack()">
+                        <Button v-if="prev_ids.length > 0" type="ghost" shape="circle" icon="arrow-return-left"
+                                @click="returnBack()">
                             返回上一级
                         </Button>
                     </div>
                     <div class="right-actions">
-                        <Button @click="del_model = true" type="ghost" shape="circle" icon="trash-b" :disabled="select_groups.length <= 0">
+                        <Button @click="del_model = true" type="ghost" shape="circle" icon="trash-b"
+                                :disabled="select_groups.length <= 0">
                             删除
                         </Button>
                         <div class="search-input">
@@ -63,7 +66,7 @@
                 title="操作提示">
             <p>真的要删除当前选中项吗？一旦删除将无法恢复，请想好了再决定 </p>
             <div slot="footer">
-                <Button type="text"  @click="del_model = false">取消</Button>
+                <Button type="text" @click="del_model = false">取消</Button>
                 <Button type="error" :loading="send_loading" @click="delConfirm">删了</Button>
             </div>
         </Modal>
@@ -72,215 +75,193 @@
         </transition>
     </div>
 </template>
-<script type="es6">
-  import WrapperContent from '../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../assets/js/utils'
-  import * as Time from '../../../assets/js/date_time'
-  import $ from 'jquery'
-  import _ from 'lodash'
+<script>
+    import WrapperContent from '../../../components/wrapper-content.vue'
+    import {getAllAuthMenuList,delMenu} from "@/api/system";
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        del_model: false,
-        select_groups: [],
-        send_loading: false,
-        page_size: 10,
-        page_num: 1,
-        pid: 0,
-        prev_ids: [],
-        prev_titles: [],
-        keyword: '',
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '名称',
-            key: 'title'
-          },
-          {
-            title: '路径',
-            key: 'path'
-          },
-          {
-            title: '排序',
-            key: 'sort'
-          },
-          {
-            title: '模块',
-            key: 'model'
-          },
-          {
-            title: '描述',
-            key: 'menu_desc',
-          },
-          {
-            title: '状态',
-            key: 'state',
-            render: (h, params) => {
-              if (params.row.status == 1) {
-                return h('span', '启用');
-              } else {
-                return h('span', '禁用');
-              }
-            }
-          },
-          {
-            title: '操作',
-            key: 'action',
-            align: 'center',
-            width: 150,
-            render: (h, params) => {
-              return h('div', [
-                h('i-button', {
-                  props: {
-                    type: 'ghost',
-                    size: 'small'
-                  },
-                  style:{
-                    marginRight: '10px'
-                  },
-                  on: {
-                    click: () => {
-                      this.goPage('/system/auth_menu/edit/'+params.row.id)
-                    }
-                  }
-                }, '编辑'),
-                h('i-button', {
-                  props: {
-                    type: 'primary',
-                    size: 'small'
-                  },
-                  on: {
-                    click: () => {
-                      this.nextItem(params.row.id,params.row.pid,params.row.title)
-                    }
-                  }
-                }, '下级'),
-              ])
-            }
-          }
-        ],
-        group_list: [],
-        groupCount: 0,
-      }
-    },
-    watch: {
-      keyword: function (newQuestion) {
-        this.search()
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-        this.$store.state.list_reload = false
-      }
-    },
-    created: function () {
-      this.getList()
-    },
-    methods: {
-      getList() {
-        let app = this
-        app.select_groups = []
-        app.$Loading.start()
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'System_AuthMenu.getAllList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.keyword,
-            pid: this.pid
-          },
-          success: function (res) {
-            app.$Loading.finish()
-            app.group_list = res.data.list
-            app.groupCount = Number(res.data.count)
-          }
-        });
-      },
-      delConfirm (){
-        this.delItem()
-      },
-      delItem(){
-        let app = this
-        app.send_loading = true
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'System_AuthMenu.delMenu',
-          data: {
-            ids: JSON.stringify(app.select_groups),
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.del_model = false
-            if(res.ret == 200){
-              app.$Message.success('删除成功');
-              app.getList()
-            }else{
-              app.$Message.warning(res.msg);
-            }
-          }
-        });
-      },
-      returnBack (){
-        this.pid  = this.prev_ids[this.prev_ids.length - 1]
-        this.prev_ids.splice(this.prev_ids.length - 1,1)
-        this.prev_titles.splice(this.prev_titles.length - 1,1)
-        this.getList()
-      },
-      nextItem(id,pid,title) {
-        this.page_num = 1
-        this.prev_ids.push(pid)
-        this.prev_titles.push(title)
-        this.pid = id
-        this.getList()
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
+    import $ from 'jquery'
+    import _ from 'lodash'
+
+    export default {
+        components: {
+            WrapperContent,
         },
-        // 这是我们为用户停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_groups = []
-        $.each(selection, function (k, v) {
-          app.select_groups.push(v.id)
-        });
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getList()
-      },
-      reloadList() {
-        this.getList()
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
-
-  }
+        data() {
+            return {
+                self: this,
+                del_model: false,
+                select_groups: [],
+                send_loading: false,
+                page_size: 10,
+                page_num: 1,
+                pid: 0,
+                prev_ids: [],
+                prev_titles: [],
+                keyword: '',
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
+                    },
+                    {
+                        title: '名称',
+                        key: 'title'
+                    },
+                    {
+                        title: '路径',
+                        key: 'path'
+                    },
+                    {
+                        title: '排序',
+                        key: 'sort'
+                    },
+                    {
+                        title: '模块',
+                        key: 'model'
+                    },
+                    {
+                        title: '描述',
+                        key: 'menu_desc',
+                    },
+                    {
+                        title: '状态',
+                        key: 'state',
+                        render: (h, params) => {
+                            if (params.row.status == 1) {
+                                return h('span', '启用');
+                            } else {
+                                return h('span', '禁用');
+                            }
+                        }
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        align: 'center',
+                        width: 150,
+                        render: (h, params) => {
+                            return h('div', [
+                                h('i-button', {
+                                    props: {
+                                        type: 'ghost',
+                                        size: 'small'
+                                    },
+                                    style: {
+                                        marginRight: '10px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.$router.push('/system/auth_menu/edit/' + params.row.id)
+                                        }
+                                    }
+                                }, '编辑'),
+                                h('i-button', {
+                                    props: {
+                                        type: 'primary',
+                                        size: 'small'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.nextItem(params.row.id, params.row.pid, params.row.title)
+                                        }
+                                    }
+                                }, '下级'),
+                            ])
+                        }
+                    }
+                ],
+                group_list: [],
+                groupCount: 0,
+            }
+        },
+        watch: {
+            keyword: function (newQuestion) {
+                this.search()
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getList()
+                }
+                app.$store.dispatch('SET_LIST_RELOAD', false);
+            }
+        },
+        created: function () {
+            this.getList()
+        },
+        methods: {
+            getList() {
+                let app = this;
+                app.select_groups = [];
+                app.$Loading.start();
+                getAllAuthMenuList(this.page_size,this.page_num,this.page_num,this.pid).then(res => {
+                    app.$Loading.finish()
+                    app.group_list = res.data.list
+                    app.groupCount = Number(res.data.count)
+                });
+            },
+            delConfirm() {
+                this.delItem()
+            },
+            delItem() {
+                let app = this;
+                app.send_loading = true;
+                delMenu(JSON.stringify(app.select_groups)).then(res => {
+                    app.send_loading = false;
+                    app.del_model = false;
+                    if (res.ret === 200) {
+                        app.$Message.success('删除成功');
+                        app.getList()
+                    } else {
+                        app.$Message.warning(res.msg);
+                    }
+                });
+            },
+            returnBack() {
+                this.pid = this.prev_ids[this.prev_ids.length - 1];
+                this.prev_ids.splice(this.prev_ids.length - 1, 1);
+                this.prev_titles.splice(this.prev_titles.length - 1, 1);
+                this.getList()
+            },
+            nextItem(id, pid, title) {
+                this.page_num = 1;
+                this.prev_ids.push(pid);
+                this.prev_titles.push(title);
+                this.pid = id;
+                this.getList()
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                // 这是我们为用户停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_groups = [];
+                $.each(selection, function (k, v) {
+                    app.select_groups.push(v.id)
+                });
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getList()
+            },
+            reloadList() {
+                this.getList()
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            },
+        }
+    }
 </script>
 <style>
 

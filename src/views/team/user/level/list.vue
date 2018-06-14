@@ -4,7 +4,8 @@
             <div class="data-content">
                 <div class="table-edit">
                     <div class="left-actions">
-                        <Button permission="Team_Team.addTeam" @click="form_modal = !form_modal,form_action = 'add'" type="primary"
+                        <Button permission="Team_Team.addTeam" @click="form_modal = !form_modal,form_action = 'add'"
+                                type="primary"
                                 shape="circle" icon="plus">添加等级
                         </Button>
                     </div>
@@ -89,270 +90,238 @@
 <style>
 
 </style>
-<script type="es6">
-  import WrapperContent from '../../../../components/wrapper-content.vue'
-  import axios from 'axios'
-  import * as utils from '../../../../assets/js/utils'
-  import $ from 'jquery'
-  import _ from 'lodash'
-  import {sendAjax} from "../../../../assets/js/utils";
+<script>
+    import WrapperContent from '@/components/wrapper-content.vue'
+    import {getLevelList, getLevelInfo, delLevel, doLevel} from "@/api/user";
+    import $ from 'jquery'
+    import _ from 'lodash'
 
-  export default {
-    components: {
-      WrapperContent,
-    },
-    data() {
-      return {
-        self: this,
-        del_model: false,
-        form_modal: false,
-        select_levels: [],
-        send_loading: false,
-        page_size: 10,
-        page_num: 1,
-        keyword: '',
-        loading: true,
-        columns: [
-          {
-            type: 'selection',
-            width: 60,
-            align: 'center'
-          },
-          {
-            title: '等级名称',
-            key: 'eng_name',
-            sortable: true,
-            render: (h, params) => {
-              return h('router-link', {
-                attrs: {
-                  to: '/team/user/level/detail/' + params.row.id
-                }
-              }, params.row.eng_name);
-            }
-          },
-          {
-            title: '中文名称',
-            key: 'level_name',
-          },
-          {
-            title: '排序',
-            key: 'sort',
-            sortable: true
-          },
-          {
-            title: '操作',
-            key: 'action',
-            align: 'center',
-            render: (h, params) => {
-              return h('div',[
-                h('Tooltip',{
-                  props: {
-                    content: '编辑',
-                    placement: 'top'
-                  }
-                },[
-                  h('Icon', {
-                    props: {
-                      type: 'compose',
-                      size: '16'
+    export default {
+        components: {
+            WrapperContent,
+        },
+        data() {
+            return {
+                self: this,
+                del_model: false,
+                form_modal: false,
+                select_levels: [],
+                send_loading: false,
+                page_size: 10,
+                page_num: 1,
+                keyword: '',
+                loading: true,
+                columns: [
+                    {
+                        type: 'selection',
+                        width: 60,
+                        align: 'center'
                     },
-                    class: 'table-row-icon',
-                    nativeOn: {
-                      click: () => {
-                        this.editItem(params.row.id)
-                      }
+                    {
+                        title: '等级名称',
+                        key: 'eng_name',
+                        sortable: true,
+                        render: (h, params) => {
+                            return h('router-link', {
+                                attrs: {
+                                    to: '/team/user/level/detail/' + params.row.id
+                                }
+                            }, params.row.eng_name);
+                        }
+                    },
+                    {
+                        title: '中文名称',
+                        key: 'level_name',
+                    },
+                    {
+                        title: '排序',
+                        key: 'sort',
+                        sortable: true
+                    },
+                    {
+                        title: '操作',
+                        key: 'action',
+                        align: 'center',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Tooltip', {
+                                    props: {
+                                        content: '编辑',
+                                        placement: 'top'
+                                    }
+                                }, [
+                                    h('Icon', {
+                                        props: {
+                                            type: 'compose',
+                                            size: '16'
+                                        },
+                                        class: 'table-row-icon',
+                                        nativeOn: {
+                                            click: () => {
+                                                this.editItem(params.row.id)
+                                            }
+                                        }
+                                    })
+                                ])
+                            ])
+                        }
                     }
-                  })
-                ])
-              ])
-            }
-          }
-        ],
-        team_list: [],
-        teamCount: 0,
-        form_action: 'add',
-        form_title: '添加新等级',
-        form_url: 'User_Level.addLevel',
-        form_submit: '添加',
-        formValidate: {
-          level_id: 0,
-          level_name: '',
-          eng_name: '',
-          sort: '',
-          level_desc: '',
-        },
-        ruleValidate: {
-          level_name: [
-            {required: true, message: '中文名称不能为空', trigger: 'blur'}
-          ],
-          eng_name: [
-            {required: true, message: '英文名称不能为空', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    watch: {
-      keyword: function (newQuestion) {
-        this.search()
-      },
-      form_action: function (value) {
-        if(value == 'add'){
-          this.form_title = '添加新等级'
-          this.form_submit = '添加'
-          this.form_url = 'User_Level.addLevel'
-        }else{
-          this.form_title = '编辑等级'
-          this.form_submit = '保存'
-          this.form_url = 'User_Level.editLevel'
-        }
-      },
-      form_modal: function (value) {
-        if(value === false) {
-          this.formValidate = {
-            level_id: 0,
-            level_name: '',
-            eng_name: '',
-            sort: '',
-            level_desc: '',
-          }
-        }
-      },
-      '$route'(to, from) { // 路由监听，重新获取数据
-        if (this.$store.state.list_reload) {
-          this.getList()
-        }
-      }
-    },
-    created: function () {
-      this.getList()
-    },
-    methods: {
-      getList() {
-        let app = this
-        app.loading = true
-        utils.sendAjax({
-          url: 'User_Level.getList',
-          data: {
-            page_size: this.page_size,
-            page_num: this.page_num,
-            keyword: this.keyword
-          },
-          success: function (res) {
-            app.loading = false
-            app.team_list = res.data.list
-            app.teamCount = Number(res.data.count)
-          }
-        });
-      },
-      getInfo(){
-        let app = this
-        sendAjax({
-          url: 'User_Level.getInfo',
-          data: {level_id: app.formValidate.level_id},
-          success: function (res) {
-            if (res.data) {
-              app.formValidate.level_name = res.data.level_name
-              app.formValidate.eng_name = res.data.eng_name
-              app.formValidate.level_desc = res.data.level_desc
-              app.formValidate.sort = res.data.sort
-            }
-          }
-        });
-      },
-      editItem (id){
-        this.formValidate.level_id = id
-        this.getInfo()
-        this.form_modal = true
-        this.form_action = 'edit'
-      },
-      delConfirm() {
-        this.delItem()
-      },
-      delItem() {
-        let app = this
-        app.send_loading = true
-//        app.$store.state.page_loading = true
-        utils.sendAjax({
-          url: 'User_Level.delLevel',
-          data: {
-            ids: JSON.stringify(app.select_levels),
-          },
-          success: function (res) {
-            app.send_loading = false
-            app.del_model = false
-            if (res.ret == 200) {
-              app.$Message.success('删除成功');
-              app.getList()
-            } else {
-              app.$Message.warning(res.msg);
-            }
-          }
-        });
-      },
-      search: _.debounce(
-        function () {
-          this.page_num = 1
-          this.getList()
-        },
-        // 这是我们为等级停止输入等待的毫秒数
-        500
-      ),
-      selectItem(selection) {
-        let app = this
-        app.select_levels = []
-        $.each(selection, function (k, v) {
-          app.select_levels.push(v.id)
-        });
-      },
-      changePage(page) {
-        this.page_num = page
-        this.getList()
-      },
-      changePageSize(page_size) {
-        this.page_num = 1
-        this.page_size = page_size
-        this.getList()
-      },
-      reloadList() {
-        this.getList(1, this.page_size)
-      },
-      rowClassName(row, index) {
-        return 'rowClassName';
-      },
-      handleSubmit(name) {
-        this.$refs[name].validate((valid) => {
-          if (valid) {
-            let app = this
-            this.send_loading = true
-            let option = {
-              url: app.form_url, method: 'post',
-              data: app.formValidate,
-              success: function (res) {
-                const code = res.ret;
-                const msg = res.msg;
-                if (code !== 200) {
-                  app.$Message.warning({
-                    content: msg,
-                    duration: 5
-                  });
-                } else {
-                  app.form_modal = false
-                  app.$Message.success('操作成功')
-                  app.getList()
+                ],
+                team_list: [],
+                teamCount: 0,
+                form_action: 'add',
+                form_title: '添加新等级',
+                form_url: 'add',
+                form_submit: '添加',
+                formValidate: {
+                    level_id: 0,
+                    level_name: '',
+                    eng_name: '',
+                    sort: '',
+                    level_desc: '',
+                },
+                ruleValidate: {
+                    level_name: [
+                        {required: true, message: '中文名称不能为空', trigger: 'blur'}
+                    ],
+                    eng_name: [
+                        {required: true, message: '英文名称不能为空', trigger: 'blur'}
+                    ],
                 }
-                app.send_loading = false;
-              }, fail: function (res) {
-                app.send_loading = false;
-              }
             }
-            sendAjax(option)
-          }
-        })
-      },
-      goPage(url) {
-        this.$router.push(url)
-      }
-    },
-
-  };
+        },
+        watch: {
+            keyword: function (newQuestion) {
+                this.search()
+            },
+            form_action: function (value) {
+                if (value === 'add') {
+                    this.form_title = '添加新等级';
+                    this.form_submit = '添加';
+                    this.form_url = 'add'
+                } else {
+                    this.form_title = '编辑等级';
+                    this.form_submit = '保存';
+                    this.form_url = 'edit'
+                }
+            },
+            form_modal: function (value) {
+                if (value === false) {
+                    this.formValidate = {
+                        level_id: 0,
+                        level_name: '',
+                        eng_name: '',
+                        sort: '',
+                        level_desc: '',
+                    }
+                }
+            },
+            '$route'(to, from) { // 路由监听，重新获取数据
+                if (this.$store.state.list_reload) {
+                    this.getList()
+                }
+            }
+        },
+        created: function () {
+            this.getList()
+        },
+        methods: {
+            getList() {
+                let app = this;
+                app.loading = true;
+                getLevelList(this.page_size, this.page_num, this.keyword).then(res => {
+                    app.loading = false;
+                    app.team_list = res.data.list;
+                    app.teamCount = Number(res.data.count)
+                });
+            },
+            getInfo() {
+                let app = this;
+                getLevelInfo(app.formValidate.level_id).then(res => {
+                    if (res.data) {
+                        app.formValidate.level_name = res.data.level_name;
+                        app.formValidate.eng_name = res.data.eng_name;
+                        app.formValidate.level_desc = res.data.level_desc;
+                        app.formValidate.sort = res.data.sort
+                    }
+                });
+            },
+            editItem(id) {
+                this.formValidate.level_id = id;
+                this.getInfo();
+                this.form_modal = true;
+                this.form_action = 'edit'
+            },
+            delConfirm() {
+                this.delItem()
+            },
+            delItem() {
+                let app = this;
+                app.send_loading = true;
+                delLevel(JSON.stringify(app.select_levels)).then(res => {
+                    app.send_loading = false;
+                    app.del_model = false;
+                    if (res.ret === 200) {
+                        app.$Message.success('删除成功');
+                        app.getList()
+                    } else {
+                        app.$Message.warning(res.msg);
+                    }
+                });
+            },
+            search: _.debounce(
+                function () {
+                    this.page_num = 1;
+                    this.getList()
+                },
+                // 这是我们为等级停止输入等待的毫秒数
+                500
+            ),
+            selectItem(selection) {
+                let app = this;
+                app.select_levels = [];
+                $.each(selection, function (k, v) {
+                    app.select_levels.push(v.id)
+                });
+            },
+            changePage(page) {
+                this.page_num = page;
+                this.getList()
+            },
+            changePageSize(page_size) {
+                this.page_num = 1;
+                this.page_size = page_size;
+                this.getList()
+            },
+            reloadList() {
+                this.getList(1, this.page_size)
+            },
+            rowClassName(row, index) {
+                return 'rowClassName';
+            },
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    if (valid) {
+                        let app = this;
+                        this.send_loading = true;
+                        doLevel(app.form_url, app.formValidate).then(res => {
+                            const code = res.ret;
+                            const msg = res.msg;
+                            if (code !== 200) {
+                                app.$Message.warning({
+                                    content: msg,
+                                    duration: 5
+                                });
+                            } else {
+                                app.form_modal = false;
+                                app.$Message.success('操作成功');
+                                app.getList()
+                            }
+                            app.send_loading = false;
+                        });
+                    }
+                })
+            }
+        }
+    };
 </script>
