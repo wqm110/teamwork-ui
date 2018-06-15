@@ -189,7 +189,7 @@ export function setTypeTaskExecutor(project_id, type_id, user_id) {
 }
 
 export function setTaskState(task_id, state) {
-    return $http.post('Project_Task.setTaskState', {task_id: task_id, state: state});
+    return $http.post('Project_Task.setTaskState', {task_id: task_id, task_state: state});
 }
 
 export function getTaskForUser(is_executor, state, project_id = 0, is_overdue = 0) {

@@ -53,17 +53,6 @@ export const showWarConfirm = (options = {}, callback = function () {
     });
 };
 
-/**
- * 获取api请求地址
- */
-export const getApiUrl2 = (api) => {
-    // return '/public/?service=' + api
-    if (NODE_ENV === 'development') {
-        return '/api?service=' + api
-    } else {
-        return '/?s=' + api
-    }
-};
 
 export const getApiUrl = (api) => {
     // return '/public/?service=' + api
