@@ -10,4 +10,6 @@ export default {
     notify_no_read_list: [], //未读消息列表
     notify_no_read_count: 0,
     system_info: getStore('system_info', true) ? getStore('system_info', true) : {'site_name': ''}, // 站点信息
+    last_path: getStore('last_path') ? getStore('last_path') : '/project/overview', // 上次访问地址
+
 }

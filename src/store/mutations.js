@@ -28,4 +28,7 @@ export default {
     SET_SYSTEM_INFO(state, data) {
         state.system_info = data;
     },
+    SET_LAST_PATH(state, path) {
+        state.last_path = path;
+    },
 };

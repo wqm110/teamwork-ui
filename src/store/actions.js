@@ -38,4 +38,8 @@ export default {
         setStore('system_info', data);
         commit('SET_SYSTEM_INFO', data);
     },
+    SET_LAST_PATH({commit}, path) {
+        setStore('last_path', path);
+        commit('SET_LAST_PATH', path);
+    },
 }

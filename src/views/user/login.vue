@@ -109,11 +109,17 @@
 </style>
 <script>
     import {setStore} from '../../assets/js/storage'
+    import {mapState} from 'vuex'
     import {Login, getUserMenu, getUserAuth} from '@/api/user'
     import {getSetting} from '@/api/system'
     import {getNotifyList} from '@/api/common'
 
     export default {
+        computed: {
+            ...mapState({
+                last_path: state => state.last_path
+            })
+        },
         data() {
             const validateName = (rule, value, callback = function () {
             }) => {
@@ -200,7 +206,8 @@
                                         setStore('auth_list', auth.data);
                                         app.$Message.success('登录成功~!');
                                         app.getNotifyNoReadList();
-                                        app.$router.push(menu_model_list[0]['path'])
+                                        // app.$router.push(menu_model_list[0]['path'])
+                                        app.$router.push(app.last_path)
                                     });
                                 });
                             }

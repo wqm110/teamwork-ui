@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import store from '@/store'
 import Router from 'vue-router'
 import Home from './home';
 import Project from './project';
@@ -24,6 +25,9 @@ router.beforeEach((to, from, next) => {
 });
 router.afterEach(route => {
     //预留
+    if (route.name !== 'login') {
+        store.dispatch('SET_LAST_PATH', route.fullPath);
+    }
 });
 
 export default router
