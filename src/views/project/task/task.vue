@@ -1,5 +1,23 @@
 <template>
     <div class="task-info">
+        <!--  <ul class="person-list" style="margin-top: 100px;text-align: center">
+              <li  v-for="(task_type,index) in task_type_list" :key="task_type.id"  v-dragging="{ item: task_type, list: task_type_list, group: 'task_type' }">{{task_type.name}}
+                  <ul>
+                      <li v-for="(item,index1) in person" v-dragging="{ item: item, list: person, group: task_type.name }"
+                          :key="index + '_' + index1">{{item.name}}</li>
+                  </ul>
+              </li>
+          </ul>
+          <ul class="person-list" style="margin-top: 100px;text-align: center">
+              <li v-for="item in person" v-dragging="{ item: item, list: person, group: 'personInfo' }"
+                  :key="item.name"
+              >{{item.name}}
+                  <ul>
+                      <li v-for='(member,index) in item.children' v-dragging="{ item: member, list: item.children, group: item.name }"
+                          :key="index">{{member.name}}</li>
+                  </ul>
+              </li>
+          </ul>-->
         <div class="project-navigation">
             <div class="project-nav-header">
                 <Breadcrumb class="text-default" separator=">">
@@ -33,7 +51,8 @@
         <wrapper-content>
             <ul class="board-scrum-stages">
                 <li class="scrum-stage" :class="{ 'fixed-creator': task_type.fixed_creator == true}"
-                    v-for="(task_type,index) in task_type_list">
+                    v-for="(task_type,index) in task_type_list" :key="task_type.id"
+                    v-dragging="{ item: task_type, list: task_type_list, group: 'task_type', type:'task_type'  }">
                     <header class="scrum-stage-header ui-sortable-handle">
                         <div class="stage-name hinted"><span class="icon icon-tick"></span> {{ task_type.name }} <span
                                 class="task-count"
@@ -76,7 +95,8 @@
                                     :class="showTaskLevel(task.pri)"
                                     @click="showTaskDetail(task.id,index,task_index)"
                                     v-for="(task,task_index) in task_type.list"
-                                    v-if="task.task_state == 0">
+                                    v-if="task.task_state == 0" :key="task_type.id + '_'+ task_index"
+                                    v-dragging="{ item: task, list: task_type.list, group: task_type.name, type:'task' }">
                                     <div class="task-priority bg-priority-0"></div>
                                     <a class="check-box" @click.stop="setTaskState(task.id,index,task_index,true)"><span
                                             class="ivu-icon ivu-icon-checkmark"></span></a>
@@ -462,7 +482,9 @@
         delProjectUser,
         delTypeTask,
         setTypeTaskEndTime,
-        setTypeTaskExecutor
+        setTypeTaskExecutor,
+        exchangeTaskSort,
+        exchangeTaskTypeSort
     } from "@/api/project"
 
     export default {
@@ -473,6 +495,54 @@
         },
         data() {
             return {
+                person: [
+                    {
+                        name: "Jack",
+                        children: [{
+                            name: "Aquamarine"
+                        }, {
+                            name: "Hotpink"
+                        }, {
+                            name: "Gold"
+                        }, {
+                            name: "Crimson"
+                        }, {
+                            name: "Blueviolet"
+                        }, {
+                            name: "Lightblue"
+                        }, {
+                            name: "Cornflowerblue"
+                        }, {
+                            name: "Skyblue"
+                        }, {
+                            name: "Burlywood"
+                        }]
+                    }, {
+                        name: "Rose",
+                        children: [
+                            {
+                                sex: 'boy',
+                                name: 'Mike2'
+                            },
+                            {
+                                sex: 'girl',
+                                name: 'Robin2'
+                            }
+                        ]
+                    }, {
+                        name: "John",
+                        children: [
+                            {
+                                sex: 'boy',
+                                name: 'Mike3'
+                            },
+                            {
+                                sex: 'girl',
+                                name: 'Robin3'
+                            }
+                        ]
+                    }
+                ],
                 menu_modal: false,
                 user_menu_modal: false,
                 show_task_detail: false,
@@ -531,6 +601,12 @@
                 set_executor_modal: false,
                 type_task_id: 0,
                 select_task_type_index: 0,
+
+                from_task_id: 0,
+                to_task_id: 0,
+                exchanging: false,//停止拖拽时会触发两次，所以加此限制
+                chang_type: '',
+
 
                 timer: false,
                 screenHeight: document.body.clientHeight,
@@ -601,6 +677,10 @@
         },
         mounted() {
             const app = this;
+            app.draggedEvent();
+            // this.$nextTick(function () {
+            //     app.draggedEvent();
+            // });
             //等待数据挂载完毕后判断是否有滚动条
             setTimeout(function () {
                 app.hasScrolled()
@@ -614,6 +694,30 @@
             }
         },
         methods: {
+            draggedEvent() {
+                let app = this;
+                this.$dragging.$on('dragged', (res) => { // 拖拽时触发，回调里面有一个参数
+                    app.from_task_id = res.draged.id;
+                    app.to_task_id = res.to.id;
+                    app.chang_type = res.value.type;
+                    console.log(res)
+                });
+                this.$dragging.$on('dragend', () => { // 停止拖拽后触发，回调无参数
+                    if (!app.exchanging) {
+                        app.exchanging = true;
+                        if (app.chang_type === 'task') {
+                            exchangeTaskSort(app.from_task_id, app.to_task_id).then(res=>{
+                                app.exchanging = false;
+                            });
+                        } else if (app.chang_type === 'task_type') {
+                            exchangeTaskTypeSort(app.from_task_id, app.to_task_id).then(res=>{
+                                app.exchanging = false;
+                            });
+                        }
+                    }
+                    console.log('dragend')
+                })
+            },
             //获取任务类型列表
             getTaskType() {
                 let app = this;

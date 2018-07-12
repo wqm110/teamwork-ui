@@ -118,6 +118,12 @@ export function doProject(action = 'add', data) {
 export function getTaskInfo(task_id) {
     return $http.post('Project_Task.getInfo', {task_id: task_id});
 }
+export function exchangeTaskSort(from_task_id,to_task_id) {
+    return $http.post('Project_Task.exchangeTaskSort', {from_task_id: from_task_id,to_task_id:to_task_id});
+}
+export function exchangeTaskTypeSort(from_task_type_id,to_task_type_id) {
+    return $http.post('Project_TaskType.exchangeTaskTypeSort', {from_task_type_id: from_task_type_id,to_task_type_id:to_task_type_id});
+}
 
 export function getTaskLog(task_id, show_all) {
     return $http.post('Project_Task.getTaskLog', {task_id: task_id, show_all: show_all});

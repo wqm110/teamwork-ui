@@ -4,6 +4,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import iView from 'iview'
+import VueDND from 'awe-dnd'
 import App from './App'
 import store from './store'
 import router from './router'
@@ -17,6 +18,7 @@ Vue.use(store);
 
 Vue.config.productionTip = false;
 Vue.use(iView);
+Vue.use(VueDND);
 
 Vue.component('CheckLabel', CheckLabel);
 
