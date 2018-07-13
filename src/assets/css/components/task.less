@@ -53,6 +53,7 @@
   vertical-align: top;
   background-color: #EEEEEE;
   border-radius: 3px;
+  cursor: move;
 }
 
 .scrum-stage .scrum-stage-header, .scrum-stage .sort-header-placeholder {
@@ -832,6 +833,9 @@ li.activity.creator i {
   transition: color 218ms ease;
 }
 
+li.task.task-card.ui-sortable-handle.dragging, .scrum-stage-tasks-done li.task.task-card.ui-sortable-handle.dragging {
+  cursor: move;
+}
 /*紧急程度一般*/
 li.task.task-card.ui-sortable-handle:hover, .scrum-stage-tasks-done li.task.task-card.ui-sortable-handle:hover {
   border-left: 3px solid #a6a6a6;
@@ -1241,4 +1245,12 @@ li.task.task-card.ui-sortable-handle {
 }
 .user-menu-modal .ivu-modal-content .project-menus:after{
   background-color: inherit;
+}
+.task-type-move{
+  //background: red;
+  //transform: rotate(2deg) !important;
+}
+.task-move{
+  //transform: rotate(2deg);
+
 }

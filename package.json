@@ -23,6 +23,7 @@
     "vue-wangeditor": "^1.3.9",
     "vue-socket.io": "latest",
     "vuex": "latest",
+    "vue-slicksort": "^0.1.8",
     "wangeditor": "^2.1.23",
     "socket.io-client": "latest"
   },

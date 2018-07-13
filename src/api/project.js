@@ -118,11 +118,13 @@ export function doProject(action = 'add', data) {
 export function getTaskInfo(task_id) {
     return $http.post('Project_Task.getInfo', {task_id: task_id});
 }
-export function exchangeTaskSort(from_task_id,to_task_id) {
-    return $http.post('Project_Task.exchangeTaskSort', {from_task_id: from_task_id,to_task_id:to_task_id});
+
+export function exchangeTaskSort(list) {
+    return $http.post('Project_Task.exchangeTaskSort', {list: list});
 }
-export function exchangeTaskTypeSort(from_task_type_id,to_task_type_id) {
-    return $http.post('Project_TaskType.exchangeTaskTypeSort', {from_task_type_id: from_task_type_id,to_task_type_id:to_task_type_id});
+
+export function exchangeTaskTypeSort(list) {
+    return $http.post('Project_TaskType.exchangeTaskTypeSort',  {list: list});
 }
 
 export function getTaskLog(task_id, show_all) {
@@ -206,6 +208,7 @@ export function getTaskForUser(is_executor, state, project_id = 0, is_overdue = 
         is_overdue: is_overdue
     });
 }
+
 export function getTaskForUserObject(data) {
     return $http.post('project_Task.getTaskForUser', data);
 }
