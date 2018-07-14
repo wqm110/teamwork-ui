@@ -336,6 +336,7 @@
                     app.project = res.data;
                     app.$emit('on-update', app.project);
                     app.formValidate = {
+                        project_id: app.project_id,
                         name: res.data.name,
                         access_control_type: res.data.access_control_type,
                         status: res.data.status,
@@ -346,6 +347,7 @@
                         project_desc: res.data.project_desc,
                     };
                     app.formValidateOther = {
+                        project_id: app.project_id,
                         schedule: Number(res.data.schedule),
                         leader_id: res.data.leader_id,
                         business_id: res.data.business_id,

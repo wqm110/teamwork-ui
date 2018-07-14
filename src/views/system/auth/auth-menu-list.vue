@@ -194,7 +194,7 @@
                 let app = this;
                 app.select_groups = [];
                 app.$Loading.start();
-                getAllAuthMenuList(this.page_size,this.page_num,this.page_num,this.pid).then(res => {
+                getAllAuthMenuList(this.page_size,this.page_num,this.keyword,this.pid).then(res => {
                     app.$Loading.finish()
                     app.group_list = res.data.list
                     app.groupCount = Number(res.data.count)

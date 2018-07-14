@@ -38,7 +38,7 @@ export async function delMenu(ids) {
     return $http.post('System_AuthMenu.delMenu', {ids: ids});
 }
 
-export async function getAllAuthMenuList(pid = -1, page_size, page_num, keyword) {
+export async function getAllAuthMenuList(page_size, page_num, keyword,pid = -1) {
     return $http.post('System_AuthMenu.getAllList', {
         pid: pid,
         page_size: page_size,
