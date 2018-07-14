@@ -6,8 +6,8 @@
                    v-model="detail_modal"
                    title="任务提示">
                 <div slot="header">
-                    <span class="task-header-title muted">{{ task.project_info.name }} ·
-                        <Dropdown class="task-type-list" trigger="click" @on-click="changeTaskType">
+                    <span class="task-header-title muted" v-if="task.pid == 0">{{ task.project_info.name }} ·
+                        <Dropdown :transfer="true" class="task-type-list" trigger="click" @on-click="changeTaskType">
                             <a href="javascript:void(0)" class="muted">
                                 {{ task.task_type_name }}
                             </a>
@@ -21,6 +21,10 @@
                             </Dropdown-menu>
                         </Dropdown>
                     </span>
+                    <span class="task-header-title muted" v-else-if="task.pid">属于任务：<a href="javascript:void(0)" @click="init(task.pid)" class="muted">
+                                {{ task.parent_task.name }}
+                            </a>
+                    </span>
                     <div class="task-detail-action">
                         <Dropdown trigger="click" @on-click="delete_task_modal = !delete_task_modal">
                             <a href="javascript:void(0)" class="muted">
@@ -33,11 +37,11 @@
                         </Dropdown>
                     </div>
                     <div class="task task-title-wrap" :class="{'done': task.task_state == 1}">
-                        <a class="check-box" @click.stop="setTaskState()"><span
+                        <a class="check-box" @click.stop="setTaskState(task)"><span
                                 class="ivu-icon ivu-icon-checkmark"></span></a>
-                        <Input v-model="task.name" v-if="show_name_edit" class="task-input muted"
-                               @on-blur="editName"/>
-                        <h3 class="task-title" @click="show_name_edit = true" v-else>
+                        <Input v-model="task.name" v-if="show_name_edit && edit_task_id == task.id" class="task-input muted"
+                               @on-blur="editName(task)" :autofocus="true" element-id="title-input"/>
+                        <h3 class="task-title" @click="show_name_edit = true;edit_task_id = task.id" v-else>
                             <Tooltip placement="top" content="点击即可编辑">
                                 <span :class="{'muted':task.task_state == 1}" style="line-height: 25px">
                                     {{ task.name }}
@@ -53,14 +57,15 @@
                                 <i-col span="8">
                                     <!--<div class="executor">执行者</div>-->
                                     <div @click="show_task_user = !show_task_user" style="cursor: pointer;">
-                                        <Dropdown class="task-user-list" trigger="click"
+                                        <Dropdown :transfer="true" trigger="click"
                                                   @on-click="addTaskExecutorUser"
-                                                  v-if="task_user_list.list.length > 0">
+                                                  v-if="task_user_list.list.length > 0"
+                                        >
                                             <img class="avatar img-circle img-24 pull-left m-r-sm"
                                                  :src="task_user_list.executor.avatar" alt="">
                                             <span class="muted"
                                                   style="line-height: 25px;">{{ task_user_list.executor.realname }}</span>
-                                            <Dropdown-menu slot="list">
+                                            <Dropdown-menu slot="list" class="task-user-list" >
                                                 <p class="m-sm">设置执行者</p>
                                                 <Dropdown-item
                                                         v-for="(user,index) in task_user_list.list" :key="index"
@@ -284,13 +289,187 @@
                         </div>
                     </div>
                 </div>
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap">
+                <div class="detail-content" style="margin-bottom: 0">
+                    <div class="detail-white-card task-detail-handler-wrap no-border">
                         <div class="task-detail-handler-set">
                             <Row>
                                 <i-col>
                                     <div class="note-aside muted">
                                         <Icon type="ios-list-outline" size="24"></Icon>
+                                        <span class="title">子任务 <span v-show="task.children_task">· {{showTaskCount(task.children_task,1)}}/{{showTaskCount(task.children_task,-1)}}</span></span>
+                                    </div>
+                                </i-col>
+                            </Row>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-content">
+                    <div class="detail-white-card task-detail-handler-wrap">
+                        <div class="task-detail-handler-set text-default" style="padding-left: 0;">
+                            <Row style="padding-bottom: 10px;">
+                                <i-col v-if="task.children_task">
+                                    <SlickList  lockAxis="y" axis="y" :pressDelay="500" v-model="task.children_task" @input="SlickEvent" class="children-task-list">
+                                        <SlickItem class="children-task" v-for="(children,index) in task.children_task"
+                                            :key="children.id" :index="index" v-if="children.task_state == 0">
+                                            <div class="link-head">
+                                                <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
+                                                    <a class="check-box" @click.stop="setTaskState(children,false)"><span
+                                                            class="ivu-icon ivu-icon-checkmark"></span></a>
+                                                    <Input v-model="children.name"
+                                                           v-if="show_name_edit && edit_task_id == children.id"
+                                                           class="task-input muted"
+                                                           @on-blur="editName(children)" :autofocus="true"/>
+                                                    <p class="task-title"
+                                                       @click="show_name_edit = true; edit_task_id = children.id"
+                                                       v-else>
+                                                        <Tooltip placement="top" content="点击即可编辑">
+                                <span :class="{'muted':children.task_state == 1}" style="line-height: 25px">
+                                    {{ children.name }}
+                                </span>
+                                                        </Tooltip>
+                                                    </p>
+                                                    <div @click="show_task_user = !show_task_user"
+                                                         style="cursor: pointer;">
+                                                        <Dropdown :transfer="true" trigger="click"
+                                                                  @on-click="addTaskExecutorUser($event,children.id)"
+                                                                  v-if="project_user_list.length > 0">
+                                                            <img class="task-avatar avatar img-circle img-24"
+                                                                 :src="children.executor_user_info.avatar" alt="">
+                                                            <p class="task-time"><span v-if="children.end_time">{{children.end_time}}</span></p>
+                                                            <a class="task-detail-icon muted" @click.stop="init(children.id)">
+                                                                <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
+                                                            </a>
+                                                            <Dropdown-menu slot="list" class="children-task-user-list">
+                                                                <p class="m-sm">设置执行者</p>
+                                                                <Dropdown-item
+                                                                        v-for="(user,index) in project_user_list"
+                                                                        :key="index"
+                                                                        :name="user.id">
+                                                                    <img class="avatar img-circle img-24 pull-left m-r-sm "
+                                                                         :src="user.avatar">
+                                                                    <span class="muted"
+                                                                          style="line-height: 25px;">{{ user.realname }}</span>
+                                                                    <Icon type="ios-checkmark-empty"
+                                                                          v-if="user.id == children.executor_user_info.id"></Icon>
+                                                                </Dropdown-item>
+                                                            </Dropdown-menu>
+                                                        </Dropdown>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </SlickItem>
+                                        <div class="children-task" v-for="(children,index) in task.children_task"
+                                                   :key="children.id" :index="index" v-if="children.task_state == 1">
+                                            <div class="link-head">
+                                                <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
+                                                    <a class="check-box" @click.stop="setTaskState(children,false)"><span
+                                                            class="ivu-icon ivu-icon-checkmark"></span></a>
+                                                    <Input v-model="children.name"
+                                                           v-if="show_name_edit && edit_task_id == children.id"
+                                                           class="task-input muted"
+                                                           @on-blur="editName(children)" :autofocus="true"/>
+                                                    <p class="task-title"
+                                                       @click="show_name_edit = true; edit_task_id = children.id"
+                                                       v-else>
+                                                        <Tooltip placement="top" content="点击即可编辑">
+                                <span :class="{'muted':children.task_state == 1}" style="line-height: 25px">
+                                    {{ children.name }}
+                                </span>
+                                                        </Tooltip>
+                                                    </p>
+                                                    <div @click="show_task_user = !show_task_user"
+                                                         style="cursor: pointer;">
+                                                        <Dropdown :transfer="true" trigger="click"
+                                                                  @on-click="addTaskExecutorUser($event,children.id)"
+                                                                  v-if="project_user_list.length > 0">
+                                                            <img class="task-avatar avatar img-circle img-24"
+                                                                 :src="children.executor_user_info.avatar" alt="">
+                                                            <p class="task-time"><span v-if="children.end_time">{{children.end_time}}</span></p>
+                                                            <a class="task-detail-icon muted" @click.stop="init(children.id)">
+                                                                <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
+                                                            </a>
+                                                            <Dropdown-menu slot="list" class="children-task-user-list">
+                                                                <p class="m-sm">设置执行者</p>
+                                                                <Dropdown-item
+                                                                        v-for="(user,index) in project_user_list"
+                                                                        :key="index"
+                                                                        :name="user.id">
+                                                                    <img class="avatar img-circle img-24 pull-left m-r-sm "
+                                                                         :src="user.avatar">
+                                                                    <span class="muted"
+                                                                          style="line-height: 25px;">{{ user.realname }}</span>
+                                                                    <Icon type="ios-checkmark-empty"
+                                                                          v-if="user.id == children.executor_user_info.id"></Icon>
+                                                                </Dropdown-item>
+                                                            </Dropdown-menu>
+                                                        </Dropdown>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </SlickList>
+                                </i-col>
+                                <i-col>
+                                    <div class="children-task" v-show="create_task">
+                                        <div class="link-head">
+                                            <div class="task children-task-title-wrap">
+                                                <Input v-model="new_task.name"
+                                                       class="task-input muted"/>
+                                                <div @click="show_task_user = !show_task_user"
+                                                     style="cursor: pointer;">
+                                                    <Dropdown :transfer="true" trigger="click"
+                                                              @on-click="selectExecutor"
+                                                              v-if="project_user_list.length > 0">
+                                                        <img class="task-avatar avatar img-circle img-24 pull-left m-r-sm"
+                                                             :src="default_executor.avatar" alt="">
+                                                        <p class="task-time"></p>
+                                                        <Dropdown-menu slot="list" class="children-task-user-list">
+                                                            <p class="m-sm">设置执行者</p>
+                                                            <Dropdown-item
+                                                                    v-for="(user,index) in project_user_list"
+                                                                    :key="index"
+                                                                    :name="index">
+                                                                <img class="avatar img-circle img-24 pull-left m-r-sm "
+                                                                     :src="user.avatar">
+                                                                <span class="muted"
+                                                                      style="line-height: 25px;">{{ user.realname }}</span>
+                                                                <Icon type="ios-checkmark-empty"
+                                                                      v-if="user.id == default_executor.id"></Icon>
+                                                            </Dropdown-item>
+                                                        </Dropdown-menu>
+                                                    </Dropdown>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="submit-set pull-right m-t-xs ">
+                                            <Button type="ghost" class="small-btn"
+                                                    @click="create_task = false">取消
+                                            </Button>
+                                            <Button type="primary" class="small-btn"
+                                                    @click="addTask">创建
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </i-col>
+                            </Row>
+                            <div style="height: 22px;padding-left: 10px;" v-show="!create_task">
+                                <a href="javascript:void(0)" @click="create_task = true">
+                                    <Icon type="plus-circled" style="float: left;font-size: 22px;"></Icon>
+                                    <span style="float: left;margin-top: 2px; margin-left: 5px;">添加子任务</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-content" style="margin-bottom: 0">
+                    <div class="detail-white-card task-detail-handler-wrap no-border">
+                        <div class="task-detail-handler-set">
+                            <Row>
+                                <i-col>
+                                    <div class="note-aside muted">
+                                        <Icon type="link" size="24"></Icon>
                                         <span class="title">关联的文件</span>
                                     </div>
                                 </i-col>
@@ -299,7 +478,7 @@
                     </div>
                 </div>
                 <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap" style="border-bottom: none;">
+                    <div class="detail-white-card task-detail-handler-wrap">
                         <div class="task-detail-handler-set text-default" style="padding-left: 0;">
                             <Row>
                                 <i-col>
@@ -484,289 +663,14 @@
         </div>
     </div>
 </template>
-
-<style>
-    .task-detail-modal .ivu-modal {
-        top: 50px;
-        padding-bottom: 50px;
-    }
-
-    .task-detail-modal .ivu-modal-content {
-        max-height: inherit !important;
-        /*background-color: #f7f7f7;*/
-        /*max-height: 855px;*/
-        /*overflow: auto;*/
-        overflow: inherit !important;
-        border-radius: 3px;
-    }
-
-    .task-detail-modal .ivu-modal-header {
-        padding-bottom: 0;
-        border-bottom: none;
-    }
-
-    .task-detail-modal .ivu-modal-header .task-header-title {
-        display: inline-block;
-        background-color: #F5F5F5;
-        padding: 5px 8px;
-        font-size: 14px;
-    }
-
-    .task-detail-modal .ivu-modal-body {
-        padding: 10px 0 0;
-        background: #FFF;
-    }
-
-    .task-detail-modal .ivu-modal-footer {
-        border-top: none;
-        display: none;
-    }
-
-    .task-detail-modal .detail-white-card {
-        background-color: #fff;
-        border-bottom: 1px solid rgba(0, 0, 0, .1);
-        border-radius: 3px;
-    }
-
-    .task-detail-modal .detail-content {
-        margin-bottom: 10px;
-        padding: 0 10px;
-    }
-
-    .task-detail-modal .task-content {
-        float: left;
-        margin-top: 2px;
-        margin-left: 20px;
-        cursor: pointer;
-        width: 95%;
-        padding: 5px;
-    }
-
-    .task-detail-modal .note-aside {
-        display: flex;
-        align-items: center;
-    }
-
-    .task-detail-modal .note-aside .title {
-        padding-left: 10px;
-        padding-right: 10px;
-        width: 100px;
-    }
-
-    .task-detail-modal .task-type-list .ivu-select-dropdown {
-        width: 150px;
-    }
-
-    .task-detail-modal .task-level-list .ivu-select-dropdown {
-        width: 200px;
-    }
-
-    .task-detail-modal .task-content:hover {
-        background: #F7F7F7;
-    }
-
-    .task-detail-modal .wangEditor-container .wangEditor-txt {
-        height: 100% !important;
-    }
-
-    .task-detail-modal {
-        padding: 10px;
-    }
-
-    .last-detail-white-card {
-        min-height: 300px;
-        border-radius: 0;
-        padding-top: 10px;
-        background: #f5f5f5 !important;
-        border-bottom: none !important;
-    }
-
-    .last-detail-white-card .activities-timeline > div, .activities-timeline > ul {
-        background-color: initial;
-    }
-
-    .task-detail-modal .task-detail-action {
-        margin-top: 4px;
-        margin-right: 25px;
-        display: inline-block;
-        float: right;
-    }
-
-    .task-detail .ivu-select-dropdown {
-        /*position: relative !important;*/
-        /*left: 0 !important;*/
-        /*top: 0 !important;*/
-    }
-
-    .task-detail-handler-set {
-        padding: 0 10px 10px 10px;
-    }
-
-    .task-user-join {
-        padding-left: 20px;
-    }
-
-    .task-user-join .ivu-row {
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(0, 0, 0, .1);
-    }
-
-    .task-input {
-        text-align: left;
-        margin-left: 15px;
-    }
-
-    .task-title-wrap {
-        padding: 5px;
-        margin-top: 25px;
-        margin-bottom: 10px;
-    }
-
-    .task-title-wrap.done {
-        background-color: inherit;
-    }
-
-    .task .task-title-wrap .check-box .ivu-icon.ivu-icon-checkmark {
-        font-size: 16px;
-    }
-
-    .task-title {
-        cursor: text;
-        border-radius: 3px;
-        font-size: 18px;
-        font-weight: 400;
-        text-align: left;
-        width: 100%;
-        top: 5px;
-        margin-left: 5px;
-        padding: 0 5px;
-    }
-
-    .task-title:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    .task-title .ivu-tooltip, .task-title .ivu-tooltip .ivu-tooltip-rel {
-        width: 100%;
-    }
-
-    .task-base .executor {
-        margin-bottom: 5px;
-    }
-
-    .task-user-list .avatar {
-        float: left;
-        margin-right: 10px;
-    }
-
-    .task-user-list .ivu-select-dropdown {
-        width: 200px;
-    }
-
-    .task-user-list .ivu-icon-ios-checkmark-empty {
-        float: right;
-        font-size: 24px;
-    }
-
-    .task-content-footer {
-        text-align: right;
-    }
-
-    .task-content-footer button {
-        margin-top: 10px;
-    }
-
-    .task-date-item {
-        float: left;
-        padding-right: 15px;
-        padding-top: 3px;
-    }
-
-    .task-date-item .date-title {
-        display: flex;
-        align-items: center;
-    }
-
-    .file-list-title {
-        margin-left: 10px;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        position: relative;
-    }
-
-    .file-list-span {
-        position: absolute;
-        top: 2px;
-        left: 20px;
-    }
-
-    .task-user-item {
-        margin-left: 5px;
-        margin-top: 5px;
-    }
-
-    .task-user-join .item-avatar {
-        margin-right: 10px;
-    }
-
-    .file-list {
-        padding-bottom: 15px;
-    }
-
-    .task-file-upload {
-        padding: 0;
-    }
-
-    .task-file-upload .ivu-icon {
-        padding-left: 10px;
-    }
-
-    .detail-content .link {
-        position: relative;
-        padding: 8px 10px 8px 5px;
-        cursor: pointer;
-        /*border-top: 1px solid rgba(0, 0, 0, 0.1);*/
-        background-color: #FFFFFF;
-    }
-
-    .detail-content .link:first-child {
-        border-top: none;
-        border-radius: 3px;
-    }
-
-    .detail-content .link:hover {
-        background-color: #F7F7F7;
-    }
-
-    .detail-content .link-title {
-        width: 80%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin-right: 8px;
-    }
-
-    .detail-content .link-head {
-        -webkit-align-items: center;
-        -ms-flex-align: center;
-        align-items: center;
-    }
-
-    .detail-content .link-content {
-        display: inline-block;
-    }
-
-    .detail-content .link-icon {
-        font-size: 32px;
-    }
-</style>
 <script>
     import * as utils from '../assets/js/utils'
     import $ from 'jquery'
     import editor from './editor_2.0.vue'
     import {format} from "../assets/js/file_format";
     import * as dateTime from "../assets/js/date_time";
-    import * as Time from '../assets/js/time_format'
+    import * as Time from '../assets/js/time_format';
+    import {SlickList, SlickItem} from 'vue-slicksort';
     import {
         getTaskInfo,
         getTaskTypeList,
@@ -782,12 +686,16 @@
         addTaskExecutorUser,
         addTaskUser,
         delTaskFile,
-        getTaskFileList
+        getTaskFileList,
+        addTask,
+        exchangeTaskSort
     } from "@/api/project";
 
     export default {
         components: {
-            editor
+            editor,
+            SlickList,
+            SlickItem
         },
         props: {
             showModal: {
@@ -799,12 +707,23 @@
         },
         data() {
             return {
+                loading: true,
                 detail_modal: this.showModal,
                 task: {
                     project_info: {
                         name: ''
                     }
                 },
+                create_task: false,
+                new_task:{
+                    pid: 0,
+                    name: '',
+                    desc: '',
+                    task_type: 0
+                },
+                default_executor: {},
+                add_task_loading: false,
+                edit_task_id: 0,
                 task_name: '',
                 task_user_list: {
                     list: []
@@ -880,11 +799,31 @@
         watch: {
             showModal: function (value) {
                 this.detail_modal = value
+                if (value) {
+                    this.init();
+                }
             },
             detail_modal: function (value) {
                 this.$emit('on-modal-change', value);
             },
-            task_id: function (value) {
+            task_id: function () {
+                // this.init();
+            },
+            task: function (value) {
+                this.$emit('on-task-update', value, 'update')
+            },
+            show_name_edit: function (value) {
+                if (value) {
+                    $(".task-input input").focus()
+                }
+            }
+        },
+        methods: {
+            init(task_id){
+                if (task_id) {
+                    this.task_id = task_id;
+                }
+                this.create_task = false;
                 this.file_list = [];
                 this.task_log_list = [];
                 this.task_user_list = {
@@ -915,19 +854,71 @@
                 //任务文件列表
                 this.getTaskFileList();
             },
-            task: function (value) {
-                this.$emit('on-task-update', value, 'update')
-            },
-            show_name_edit: function (value) {
-                if (value) {
-                    $(".task-input input").focus()
+            //准备添加任务
+            addTask() {
+                console.log(this.new_task);
+                if (this.new_task.name === '') {
+                    this.$Message.warning('任务内容不能为空', 2);
+                    return false
                 }
-            }
-        },
-        methods: {
-            getInfo() {
+                this.new_task.task_type = this.task.task_type;
+                this.new_task.project_id = this.task.project;
+                this.new_task.pid = this.task.id;
+                this.doAddTask();
+            },
+            //添加任务
+            doAddTask() {
                 let app = this;
-                getTaskInfo(app.task_id).then(res => {
+                if (app.add_task_loading) {
+                    app.$Message.warning('正在添加任务，请稍后...', 2);
+                    return false;
+                }
+                setTimeout(function () {
+                    if (app.add_task_loading === true) {
+                        app.$Message.loading({
+                            content: '正在添加任务，请稍后...',
+                            duration: 5
+                        })
+                    }
+                }, 2000);
+                app.add_task_loading = true;
+                app.new_task.executor_id = app.default_executor.id;
+                addTask(app.new_task).then(res => {
+                    app.add_task_loading = false;
+                    app.$Message.destroy();
+                    const result = utils.showBack(res);
+                    if (result) {
+                        app.getInfo(app.task.id);
+                        app.new_task = {
+                            name: '',
+                            desc: '',
+                            task_type: 0
+                        };
+                        app.getTaskLogList();
+                    }
+                });
+            },
+            SlickEvent(list){
+                console.log(list);
+                const send = [];
+                list.forEach(function (v, k) {
+                    if (v.task_state == 0) {
+                        send.push(v.id);
+                    }
+                });
+                exchangeTaskSort(JSON.stringify(send));
+            },
+            selectExecutor(project_user_index) {
+                let app = this;
+                console.log(project_user_index);
+                app.default_executor = app.project_user_list[project_user_index]
+            },
+            getInfo(task_id) {
+                let app = this;
+                if (!task_id) {
+                    task_id = app.task_id;
+                }
+                getTaskInfo(task_id).then(res => {
                     app.task = res.data;
                     app.initContent(app.task.desc);
                     app.getProjectUserList(app.task.project);
@@ -955,6 +946,22 @@
                         app.remind_content = '点击设置提醒时间'
                     }
                 });
+            },
+            showTaskCount(list,state){
+                let count = 0;
+                if (!list) {
+                    return count;
+                }
+                if (state == -1) {
+                    count = list.length;
+                }else{
+                    list.forEach(function (v, k) {
+                        if (v.task_state == state) {
+                            count++;
+                        }
+                    });
+                }
+                return count;
             },
             //获取任务类型列表
             getTaskType(project_id) {
@@ -999,22 +1006,20 @@
                     }
                 });
             },
-            setTaskState(index) {
+            setTaskState(task, emit = true) {
                 let app = this;
-                let task_state = 0;
-                app.task.task_state === 0 ? task_state = 1 : task_state = 0;
-                app.task.task_state = task_state;
-                setTaskState(app.task_id, task_state).then(res => {
+                task.task_state = task.task_state == 0 ?  1 :  0;
+                setTaskState(task.id, task.task_state).then(res => {
                     const result = utils.showBack(res);
-                    if (result) {
-                        app.$emit('on-task-update', app.task, 'update', index);
-                        app.getTaskLogList()
+                    if (result && emit) {
+                        app.$emit('on-task-update', task, 'update', index);
                     }
+                    app.getTaskLogList();
                 });
             },
             changeTaskLevel(index) {
                 let app = this;
-                const level = app.task_level_list[index].key
+                const level = app.task_level_list[index].key;
                 if (level === app.task.pri) {
                     return false
                 }
@@ -1057,16 +1062,16 @@
                     }
                 });
             },
-            editName() {
+            editName(task) {
                 let app = this;
                 this.show_name_edit = false;
-                if ($.trim(app.task.name) === '') {
-                    app.task.name = app.task_name;
+                if ($.trim(task.name) === '') {
+                    task.name = app.task_name;
                     return false
                 }
                 const task_data = {
-                    task_id: app.task_id,
-                    title: app.task.name
+                    task_id: task.id,
+                    title: task.name
                 };
                 editTask(task_data).then(res => {
                     const result = utils.showBack(res);
@@ -1080,9 +1085,9 @@
                 let app = this;
                 this.send_loading = true;
                 delTask(app.task_id).then(res => {
-                    app.send_loading = false
-                    app.delete_task_modal = false
-                    app.detail_modal = false
+                    app.send_loading = false;
+                    app.delete_task_modal = false;
+                    app.detail_modal = false;
                     app.$emit('on-task-update', null, 'update');
                     app.$Message.success('任务已删除')
 
@@ -1100,19 +1105,24 @@
             showTaskUserList() {
                 let app = this;
                 getTaskUserList(app.task_id).then(res => {
-                    app.task_user_list = res.data
-
+                    app.task_user_list = res.data;
+                    app.default_executor = app.task_user_list.executor;
                 });
             },
             getProjectUserList(project_id) {
                 let app = this;
-                getUserList(project_id,app.task_id).then(res => {
-                    app.project_user_list = res.data.list
+                getUserList(project_id, '', app.task_id).then(res => {
+                    app.project_user_list = res.data.list;
                 });
             },
-            addTaskExecutorUser(user_id) {
+            addTaskExecutorUser(user_id, task_id) {
                 let app = this;
-                addTaskExecutorUser(app.task.id,user_id).then(res => {
+                console.log(user_id);
+                console.log(task_id);
+                if (!task_id) {
+                    task_id = app.task.id;
+                }
+                addTaskExecutorUser(task_id, user_id).then(res => {
                     let result = utils.showBack(res, true);
                     if (result) {
                         //todo 暂时先重新获取全部列表，后期优化
@@ -1124,7 +1134,7 @@
             },
             addTaskUser(user_id) {
                 let app = this;
-                addTaskUser(app.task.id,user_id).then(res => {
+                addTaskUser(app.task.id, user_id).then(res => {
                     const result = utils.showBack(res, true);
                     if (result) {
                         app.getTaskLogList();
@@ -1386,6 +1396,8 @@
                         return 'ivu-icon-ios-clock-outline';
                     case 'add':
                         return 'ivu-icon-plus';
+                    case 'child_task':
+                        return 'ivu-icon-ios-list-outline';
                     case 'done':
                         return 'ivu-icon-checkmark';
                     case 'again':
@@ -1434,6 +1446,328 @@
             showTaskTime(begin_time, end_time) {
                 return dateTime.showTaskTime(begin_time, end_time)
             },
-        }
+        },
     }
 </script>
+<style>
+    .ivu-select-dropdown{
+        z-index: 2000;
+        max-height: inherit !important;
+    }
+    .task-detail-modal .ivu-modal {
+        top: 50px;
+        padding-bottom: 50px;
+    }
+
+    .task-detail-modal .ivu-modal-content {
+        /*max-height: inherit !important;*/
+        /*background-color: #f7f7f7;*/
+        /*max-height: 855px;*/
+        /*overflow: auto;*/
+        /*overflow: inherit !important;*/
+        border-radius: 3px;
+    }
+
+    .task-detail-modal .ivu-modal-header {
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .task-detail-modal .ivu-modal-header .task-header-title {
+        display: inline-block;
+        background-color: #F5F5F5;
+        padding: 5px 8px;
+        font-size: 14px;
+    }
+
+    .task-detail-modal .ivu-modal-body {
+        padding: 10px 0 0;
+        background: #FFF;
+    }
+
+    .task-detail-modal .ivu-modal-footer {
+        border-top: none;
+        display: none;
+    }
+
+    .task-detail-modal .detail-white-card {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, .1);
+        border-radius: 3px;
+    }
+
+    .task-detail-modal .detail-content {
+        margin-bottom: 10px;
+        padding: 0 10px;
+    }
+
+    .task-detail-modal .task-content {
+        float: left;
+        margin-top: 2px;
+        margin-left: 20px;
+        cursor: pointer;
+        width: 95%;
+        padding: 5px;
+    }
+
+    .task-detail-modal .note-aside {
+        display: flex;
+        align-items: center;
+    }
+
+    .task-detail-modal .note-aside .title {
+        padding-left: 10px;
+        padding-right: 10px;
+        width: 100px;
+    }
+
+    .task-detail-modal .task-type-list .ivu-select-dropdown {
+        width: 150px;
+    }
+
+    .task-detail-modal .task-level-list .ivu-select-dropdown {
+        width: 200px;
+    }
+
+    .task-detail-modal .task-content:hover {
+        background: #F7F7F7;
+    }
+
+    .task-detail-modal .wangEditor-container .wangEditor-txt {
+        height: 100% !important;
+    }
+
+    .task-detail-modal {
+        padding: 10px;
+    }
+
+    .last-detail-white-card {
+        min-height: 300px;
+        border-radius: 0;
+        padding-top: 10px;
+        background: #f5f5f5 !important;
+        border-bottom: none !important;
+    }
+
+    .last-detail-white-card .activities-timeline > div, .activities-timeline > ul {
+        background-color: initial;
+    }
+
+    .task-detail-modal .task-detail-action {
+        margin-top: 4px;
+        margin-right: 25px;
+        display: inline-block;
+        float: right;
+    }
+
+    .task-detail .ivu-select-dropdown {
+        /*position: relative !important;*/
+        /*left: 0 !important;*/
+        /*top: 0 !important;*/
+    }
+    .task-detail-icon {
+        position: absolute;
+        font-size: 18px;
+        top: -8px;
+        right: 0;
+    }
+
+    .task-detail-handler-set {
+        padding: 0 10px 10px 10px;
+    }
+
+    .task-user-join {
+        padding-left: 20px;
+    }
+
+    .task-user-join .ivu-row {
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, .1);
+    }
+
+    .task-input {
+        text-align: left;
+        margin-left: 15px;
+    }
+    .task-input .ivu-input{
+        height: 26px;
+    }
+
+    .task-title-wrap {
+        padding: 5px;
+        margin-top: 25px;
+        margin-bottom: 10px;
+    }
+
+    .children-task {
+        padding-left: 5px;
+        z-index: 99999;
+    }
+    .children-task .ivu-input{
+        height: 28px;
+    }
+    .children-task-title-wrap {
+        padding: 5px;
+    }
+
+    .children-task-user-list {
+        padding-left: 5px;
+        width: 200px;
+    }
+
+    .task-time{
+        /*width: 160px;   */
+        height: 24px;
+        line-height: 2;
+        white-space: nowrap;
+        padding-right: 50px;
+        padding-left: 10px;
+    }
+    .task-avatar{
+        margin-right: 20px;
+        float: right;
+        margin-left: 10px;
+    }
+
+    .task-title-wrap.done {
+        /*background-color: inherit;*/
+    }
+
+    .task .task-title-wrap .check-box .ivu-icon.ivu-icon-checkmark {
+        font-size: 16px;
+    }
+
+    .task-title {
+        cursor: text;
+        border-radius: 3px;
+        font-size: 18px;
+        font-weight: 400;
+        text-align: left;
+        width: 100%;
+        top: 5px;
+        margin-left: 5px;
+        padding: 0 5px;
+    }
+
+    .children-task-list .task-title {
+        font-size: 14px;
+    }
+
+    .task-title:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .task-title .ivu-tooltip, .task-title .ivu-tooltip .ivu-tooltip-rel {
+        width: 100%;
+    }
+
+    .task-base .executor {
+        margin-bottom: 5px;
+    }
+
+    .task-user-list .avatar {
+        float: left;
+        margin-right: 10px;
+    }
+
+    .task-user-list{
+        width: 200px;
+    }
+
+    .task-user-list .ivu-icon-ios-checkmark-empty, .children-task-user-list .ivu-icon-ios-checkmark-empty {
+        float: right;
+        font-size: 24px;
+    }
+
+    .task-content-footer {
+        text-align: right;
+    }
+
+    .task-content-footer button {
+        margin-top: 10px;
+    }
+
+    .task-date-item {
+        float: left;
+        padding-right: 15px;
+        padding-top: 3px;
+    }
+
+    .task-date-item .date-title {
+        display: flex;
+        align-items: center;
+    }
+
+    .file-list-title {
+        margin-left: 10px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .file-list-span {
+        position: absolute;
+        top: 2px;
+        left: 20px;
+    }
+
+    .task-user-item {
+        margin-left: 5px;
+        margin-top: 5px;
+    }
+
+    .task-user-join .item-avatar {
+        margin-right: 10px;
+    }
+
+    .file-list {
+        padding-bottom: 15px;
+    }
+
+    .task-file-upload {
+        padding: 0;
+    }
+
+    .task-file-upload .ivu-icon {
+        padding-left: 10px;
+    }
+
+    .detail-content .link {
+        position: relative;
+        padding: 8px 10px 8px 5px;
+        cursor: pointer;
+        /*border-top: 1px solid rgba(0, 0, 0, 0.1);*/
+        background-color: #FFFFFF;
+    }
+
+    .detail-content .link:first-child {
+        border-top: none;
+        border-radius: 3px;
+    }
+
+    .detail-content .link:hover {
+        background-color: #F7F7F7;
+    }
+
+    .detail-content .link-title {
+        width: 80%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-right: 8px;
+    }
+
+    .detail-content .link-head {
+        -webkit-align-items: center;
+        -ms-flex-align: center;
+        align-items: center;
+    }
+
+    .detail-content .link-content {
+        display: inline-block;
+    }
+
+    .detail-content .link-icon {
+        font-size: 32px;
+    }
+</style>

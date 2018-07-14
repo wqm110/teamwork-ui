@@ -4,7 +4,7 @@
             <div class="project-nav-header">
                 <Breadcrumb class="text-default" separator=">">
                     <!--<Breadcrumb-item href="/project/all">项目</Breadcrumb-item>-->
-                    <Breadcrumb-item>{{ project.name }} <span v-show="project.name">（长按列表可拖动排序）</span></Breadcrumb-item>
+                    <Breadcrumb-item>{{ project.name }} <span class="text-warning" v-show="project.name">（长按列表可拖动排序）</span></Breadcrumb-item>
                 </Breadcrumb>
             </div>
             <section class="nav-body">
@@ -44,7 +44,7 @@
                      </div>
                  </SlickItem>
              </SlickList>-->
-            <SlickList lockAxis="x" axis="x" :pressDelay="500"  helperClass="task-type-move" v-model="task_type_list" class="board-scrum-stages" @input="SlickEvent($event,'task_type')">
+            <SlickList lockAxis="x" axis="x" :pressDelay="500" :pressThreshold="150" helperClass="task-type-move" v-model="task_type_list" class="board-scrum-stages" @input="SlickEvent($event,'task_type')">
                 <SlickItem class="scrum-stage" :class="{ 'fixed-creator': task_type.fixed_creator == true}"
                            v-for="(task_type,index) in task_type_list" :index="index"
                            :key="task_type.id">
@@ -118,6 +118,10 @@
                                                </span>
                                                 <span class="icon-wrapper muted" v-if="task.has_file">
                                                      <Icon type="android-attach"></Icon>
+                                               </span>
+                                                <span class="icon-wrapper muted" style="width: 45px" v-if="task.has_children">
+                                                     <Icon type="ios-list-outline"></Icon>
+                                                    <span class="m-l-xs">{{showTaskCount(task.children_task,1)}}/{{showTaskCount(task.children_task,-1)}}</span>
                                                </span>
                                                 <span class="tag muted" :class="'tag-color-'+ tag.color"
                                                       v-for="(tag,tag_index) in task.task_tag_item_list"> {{ tag.name }} </span>
@@ -663,6 +667,22 @@
             sortEnd(event){
                 console.log(event);
             },
+            showTaskCount(list,state){
+                let count = 0;
+                if (!list) {
+                    return count;
+                }
+                if (state == -1) {
+                    count = list.length;
+                }else{
+                    list.forEach(function (v, k) {
+                        if (v.task_state == state) {
+                            count++;
+                        }
+                    });
+                }
+                return count;
+            },
             //获取任务类型列表
             getTaskType() {
                 let app = this;
@@ -805,6 +825,9 @@
                 this.show_task_detail = value
             },
             taskUpdate(value, action, task_type_index) {
+                if (value.pid != 0) {
+                    return false;
+                }
                 if (action === 'update') {
                     if (value !== null) {
                         this.task_type_list[this.task_type_index].list[this.task_index] = value

@@ -462,6 +462,11 @@
   cursor: pointer;
   border-radius: 3px;
 }
+.children-task-list .task .check-box {
+  width: 15px;
+  height: 15px;
+  margin-top: 6px;
+}
 
 .task .check-box {
   -webkit-flex: 0 0 auto;
@@ -475,6 +480,9 @@
 
 .task.done {
   background-color: #F7F7F7;
+}
+.children-task-list .task.done {
+  background-color: inherit;
 }
 
 .task.done .task-content {
@@ -492,6 +500,11 @@
   font-size: 15px;
   -webkit-transform: translate(2px, 0);
   transform: translate(2px, 0);
+}
+.children-task-list .task .check-box .ivu-icon.ivu-icon-checkmark {
+  font-size: 12px;
+  -webkit-transform: translate(1px, -4px);
+  transform: translate(1px, -4px);
 }
 
 .scrum-stage .task-creator-wrap {
@@ -1247,6 +1260,9 @@ li.task.task-card.ui-sortable-handle {
   background-color: inherit;
 }
 .task-type-move{
+  cursor: move;
+  //border: 1px solid rgb(61, 168, 245);
+  box-shadow: 0 1px 5px 1px #c0c0c0;
   //background: red;
   //transform: rotate(2deg) !important;
 }

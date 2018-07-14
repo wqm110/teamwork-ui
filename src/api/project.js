@@ -32,8 +32,12 @@ export function delProject(ids) {
     return $http.post('Project_Project.delProject', {ids: ids});
 }
 
-export function getUserList(project_id, keyword = '') {
-    return $http.post('Project_Project.getProjectUserList', {project_id: project_id, keyword: keyword});
+export function getUserList(project_id, keyword = '', task_id = 0) {
+    return $http.post('Project_Project.getProjectUserList', {
+        project_id: project_id,
+        keyword: keyword,
+        task_id: task_id
+    });
 }
 
 export function getTypeInfo(project_type_id) {
@@ -124,7 +128,7 @@ export function exchangeTaskSort(list) {
 }
 
 export function exchangeTaskTypeSort(list) {
-    return $http.post('Project_TaskType.exchangeTaskTypeSort',  {list: list});
+    return $http.post('Project_TaskType.exchangeTaskTypeSort', {list: list});
 }
 
 export function getTaskLog(task_id, show_all) {
@@ -152,8 +156,17 @@ export function getListOverview(team_id = 0, page_size = COMMON.PAGE_SIZE, task_
     });
 }
 
-export function addTask({content, executor_id, name, project_id, task_count, task_type, title}) {
-    return $http.post('Project_Task.addTask', {content, executor_id, name, project_id, task_count, task_type, title});
+export function addTask({content, executor_id, name, project_id, task_count, task_type, title, pid}) {
+    return $http.post('Project_Task.addTask', {
+        content,
+        executor_id,
+        name,
+        project_id,
+        task_count,
+        task_type,
+        title,
+        pid: pid
+    });
 }
 
 export function editTask(data) {
