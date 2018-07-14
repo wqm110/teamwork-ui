@@ -5,7 +5,7 @@ export default [
     {
         path: '/',
         name: 'index',
-        redirect: '/index',
+        redirect: '/project/overview',
         meta: {model: 'login'},
     },
     {

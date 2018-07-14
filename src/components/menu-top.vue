@@ -303,11 +303,11 @@
                 getNotifyList().then(res => {
                     app.$store.dispatch('UPDATE_NOTIFY_NO_READ_LIST', res.data.list);
                     app.$store.dispatch('UPDATE_NOTIFY_NO_READ_COUNT', res.data.count);
-                    if (res.data.count > 0) {
-                        document.getElementById("icon").href = "http://static.vilson.xyz/favicon2.ico"
-                    } else {
-                        document.getElementById("icon").href = "http://static.vilson.xyz/favicon.ico"
-                    }
+                    // if (res.data.count > 0) {
+                    //     document.getElementById("icon").href = "http://static.vilson.xyz/favicon2.ico"
+                    // } else {
+                    //     document.getElementById("icon").href = "http://static.vilson.xyz/favicon.ico"
+                    // }
                 });
             },
             clearNotice() {

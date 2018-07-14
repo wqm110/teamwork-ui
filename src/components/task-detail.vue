@@ -335,7 +335,7 @@
                                                                   v-if="project_user_list.length > 0">
                                                             <img class="task-avatar avatar img-circle img-24"
                                                                  :src="children.executor_user_info.avatar" alt="">
-                                                            <p class="task-time"><span v-if="children.end_time">{{children.end_time}}</span></p>
+                                                            <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
                                                             <a class="task-detail-icon muted" @click.stop="init(children.id)">
                                                                 <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
                                                             </a>
@@ -385,7 +385,7 @@
                                                                   v-if="project_user_list.length > 0">
                                                             <img class="task-avatar avatar img-circle img-24"
                                                                  :src="children.executor_user_info.avatar" alt="">
-                                                            <p class="task-time"><span v-if="children.end_time">{{children.end_time}}</span></p>
+                                                            <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
                                                             <a class="task-detail-icon muted" @click.stop="init(children.id)">
                                                                 <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
                                                             </a>
@@ -422,7 +422,7 @@
                                                     <Dropdown :transfer="true" trigger="click"
                                                               @on-click="selectExecutor"
                                                               v-if="project_user_list.length > 0">
-                                                        <img class="task-avatar avatar img-circle img-24 pull-left m-r-sm"
+                                                        <img class="task-avatar avatar img-circle img-24"
                                                              :src="default_executor.avatar" alt="">
                                                         <p class="task-time"></p>
                                                         <Dropdown-menu slot="list" class="children-task-user-list">
@@ -561,13 +561,13 @@
                                                </div>
                                            </Poptip>-->
                                         <div style="display: inline-block">
-                                            <Dropdown class="task-user-list" trigger="click"
+                                            <Dropdown :transfer="true" trigger="click"
                                                       @on-click="addTaskUser">
                                                 <a href="javascript:void(0)">
                                                     <Icon type="plus-circled" class="text-navy "
                                                           style="font-size: 26px;"></Icon>
                                                 </a>
-                                                <Dropdown-menu slot="list">
+                                                <Dropdown-menu slot="list" class="task-user-list">
                                                     <p class="m-sm">添加成员・{{ project_user_list.length }}</p>
                                                     <!--<Dropdown-item style="height: 40px; ">-->
                                                     <!--<Icon type="ios-person" class="pull-left"-->
@@ -786,7 +786,7 @@
                 file_list: [],
                 delete_file_modal: false,
                 upload_config: {
-                    url: utils.getUploadUrl('Project_Task.uploadTaskFile'),
+                    url: utils.getApiUrl('Project_Task.uploadTaskFile'),
                     headers: {
                         token: utils.getStore('token')
                     },
@@ -994,7 +994,7 @@
                 const type_name = app.task_type_list[index].name;
                 let task_data = {
                     task_id: app.task_id,
-                    task_state: task_state
+                    task_type: type
                 };
                 editTask(task_data).then(res => {
                     const result = utils.showBack(res);
@@ -1226,6 +1226,9 @@
                 });
             },
             showTaskSettingTime(time) {
+                if(typeof time == "string"){
+                    time = new Date(time).getTime() / 1000;
+                }
                 if (time > 0) {
                     let show_time = utils.format_date(time, false);
                     return show_time.month + '月' + show_time.day + '日' + show_time.hour + ':' + show_time.minute
@@ -1451,7 +1454,7 @@
 </script>
 <style>
     .ivu-select-dropdown{
-        z-index: 2000;
+        z-index: 2000 !important;
         max-height: inherit !important;
     }
     .task-detail-modal .ivu-modal {
@@ -1460,10 +1463,11 @@
     }
 
     .task-detail-modal .ivu-modal-content {
-        /*max-height: inherit !important;*/
+        max-height: 89vh !important;
         /*background-color: #f7f7f7;*/
         /*max-height: 855px;*/
-        /*overflow: auto;*/
+        overflow-y: auto;
+        overflow-x: hidden;
         /*overflow: inherit !important;*/
         border-radius: 3px;
     }
@@ -1568,8 +1572,8 @@
     .task-detail-icon {
         position: absolute;
         font-size: 18px;
-        top: -8px;
-        right: 0;
+        top: -1px;
+        right: -8px;
     }
 
     .task-detail-handler-set {
