@@ -700,6 +700,12 @@
                 getTaskList(app.project_id, task_type).then(res => {
                     app.hasScrolled();
                     app.task_type_list[index].list = res.data.list;
+                    const task_id = app.$route.query.id;
+                    res.data.list.forEach(function (v,k) {
+                        if (task_id == v.id) {
+                            app.showTaskDetail(task_id,index,k)
+                        }
+                    })
                 });
             },
             getProjectInfo() {

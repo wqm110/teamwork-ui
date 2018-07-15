@@ -393,7 +393,7 @@
                                 attrs: {
                                     title: params.row.name,
                                     class: 'table-row-title',
-                                    to: '/project/task/' + params.row.project_id
+                                    to: '/project/task/' + params.row.project_id + '?id=' + params.row.id
                                 }
                             }, params.row.name);
                         }
@@ -443,7 +443,7 @@
                                 attrs: {
                                     title: params.row.name,
                                     class: 'table-row-title',
-                                    to: '/project/task/' + params.row.project_id
+                                    to: '/project/task/' + params.row.project_id + '?id=' + params.row.id
                                 }
                             }, params.row.name);
                         }
@@ -493,7 +493,7 @@
                                 attrs: {
                                     title: params.row.name,
                                     class: 'table-row-title',
-                                    to: '/project/task/' + params.row.project_id
+                                    to: '/project/task/' + params.row.project_id + '?id=' + params.row.id
                                 }
                             }, params.row.name);
                         }
@@ -543,7 +543,7 @@
                                 attrs: {
                                     title: params.row.name,
                                     class: 'table-row-title',
-                                    to: '/project/task/' + params.row.project
+                                    to: '/project/task/' + params.row.project + '?id=' + params.row.id
                                 }
                             }, params.row.name);
                         }

@@ -218,7 +218,7 @@
                 const notice_data = JSON.parse(notice.send_data);
                 if (type == 1) {
                     const project_id = notice_data.project;
-                    this.$router.push('/project/task/' + project_id)
+                    this.$router.push('/project/task/' + project_id + '?id=' + notice_data.id)
                 }
             },
             selectChange(value) {
