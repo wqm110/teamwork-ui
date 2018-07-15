@@ -9,6 +9,8 @@ import App from './App'
 import store from './store'
 import router from './router'
 import 'iview/dist/styles/iview.css'
+import vuescroll from 'vuescroll';
+import 'vuescroll/dist/vuescroll.css';
 import '@/assets/css/app.less'
 import '@/assets/icon/iconfont'
 import CheckLabel from '@/components/check-label';
@@ -21,6 +23,8 @@ Vue.use(iView);
 Vue.use(VueDND);
 
 Vue.component('CheckLabel', CheckLabel);
+
+Vue.use(vuescroll);
 
 new Vue({
     el: '#app',

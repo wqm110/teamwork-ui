@@ -50,6 +50,7 @@
                         </h3>
                     </div>
                 </div>
+                <vue-scroll :ops="ops">
                 <div class="detail-content">
                     <div class="detail-white-card task-detail-handler-wrap">
                         <div class="task-detail-handler-set task-base">
@@ -641,6 +642,7 @@
 
                 <div slot="footer">
                 </div>
+                </vue-scroll>
             </Modal>
             <Modal
                     v-model="delete_file_modal"
@@ -707,6 +709,21 @@
         },
         data() {
             return {
+                ops: {
+                    vuescroll: {
+                        mode: 'native'
+                    },
+                    bar: {
+                        delayTime: 500,
+                        onlyShowBarOnScroll: false,
+                        vBar: {
+                            background: "#cecece",
+                            keepShow: false,
+                            opacity: 1,
+                            hover: false
+                        },
+                    }
+                },
                 loading: true,
                 detail_modal: this.showModal,
                 task: {
@@ -1487,6 +1504,7 @@
     .task-detail-modal .ivu-modal-body {
         padding: 10px 0 0;
         background: #FFF;
+        height: 77vh !important;
     }
 
     .task-detail-modal .ivu-modal-footer {
@@ -1599,8 +1617,8 @@
 
     .task-title-wrap {
         padding: 5px;
-        margin-top: 25px;
-        margin-bottom: 10px;
+        margin-top: 15px;
+        margin-bottom: 5px;
     }
 
     .children-task {

@@ -49,7 +49,7 @@ $http.interceptors.response.use(
                 title: '请求错误 ' + response.ret,
                 desc: response.msg
             }, 'notice', 'warning', 5);
-            $router.back();
+            // $router.back();
             return new Promise(() => {
             });
         } else {
