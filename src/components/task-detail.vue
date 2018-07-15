@@ -478,12 +478,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap">
+                <div class="detail-content" style="margin-bottom: 0">
+                    <div class="detail-white-card task-detail-handler-wrap no-border">
                         <div class="task-detail-handler-set text-default" style="padding-left: 0;">
                             <Row>
                                 <i-col>
-                                    <ul class="file-list">
+                                    <ul class="file-list" v-if="file_list.length > 0">
                                         <li class="link" v-for="(file,index) in file_list" :key="index">
                                             <div class="link-head">
                                                 <div class="link-content m-r-sm">
@@ -1476,11 +1476,10 @@
     }
     .task-detail-modal .ivu-modal {
         top: 50px;
-        padding-bottom: 50px;
     }
 
     .task-detail-modal .ivu-modal-content {
-        max-height: 89vh !important;
+        max-height: 100vh !important;
         /*background-color: #f7f7f7;*/
         /*max-height: 855px;*/
         overflow-y: auto;
@@ -1504,7 +1503,7 @@
     .task-detail-modal .ivu-modal-body {
         padding: 10px 0 0;
         background: #FFF;
-        height: 77vh !important;
+        height: 80vh !important;
     }
 
     .task-detail-modal .ivu-modal-footer {
@@ -1564,7 +1563,7 @@
     }
 
     .last-detail-white-card {
-        min-height: 300px;
+        min-height: 353px;
         border-radius: 0;
         padding-top: 10px;
         background: #f5f5f5 !important;
