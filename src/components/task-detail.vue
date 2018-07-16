@@ -1486,7 +1486,7 @@
         height: 85vh !important;
         /*background-color: #f7f7f7;*/
         /*max-height: 855px;*/
-        overflow-y: auto;
+        overflow-y: hidden !important;
         overflow-x: hidden;
         /*overflow: inherit !important;*/
         border-radius: 3px;

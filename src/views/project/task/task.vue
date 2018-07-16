@@ -734,8 +734,8 @@
             },
             showTaskLevel(level) {
                 return {
-                    'warning': level === 2,
-                    'error': level === 1,
+                    'warning': level == 2,
+                    'error': level == 1,
                 }
             },
             selectExecutor(project_user_index) {
