@@ -713,6 +713,9 @@
                     vuescroll: {
                         mode: 'native'
                     },
+                    scrollPanel: {
+                        scrollingX: false,
+                    },
                     bar: {
                         delayTime: 500,
                         onlyShowBarOnScroll: false,
@@ -1479,7 +1482,8 @@
     }
 
     .task-detail-modal .ivu-modal-content {
-        max-height: 100vh !important;
+        /*max-height: 100vh !important;*/
+        height: 85vh !important;
         /*background-color: #f7f7f7;*/
         /*max-height: 855px;*/
         overflow-y: auto;
@@ -1503,7 +1507,7 @@
     .task-detail-modal .ivu-modal-body {
         padding: 10px 0 0;
         background: #FFF;
-        height: 80vh !important;
+        height: 75vh !important;
     }
 
     .task-detail-modal .ivu-modal-footer {

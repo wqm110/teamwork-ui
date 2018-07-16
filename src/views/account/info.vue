@@ -231,7 +231,7 @@
                 user_info: {},
                 login_log: [],
                 upload_config: {
-                    url: utils.getUploadUrl('User_User.uploadAvatarImg'),
+                    url: utils.getApiUrl('User_User.uploadAvatarImg'),
                     headers: {
                         token: utils.getStore('token')
                     },

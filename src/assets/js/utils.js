@@ -109,9 +109,9 @@ export const getDirectUrl = (api) => {
  */
 export const getUploadUrl = (api) => {
     let baseUrl = '';
-    if (process.env.NODE_ENV === 'production') {
-        baseUrl = PROD_URL
-    }
+    // if (process.env.NODE_ENV === 'production') {
+    //     baseUrl = PROD_URL
+    // }
     return baseUrl + getApiUrl(api)
 };
 
