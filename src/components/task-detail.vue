@@ -21,7 +21,9 @@
                             </Dropdown-menu>
                         </Dropdown>
                     </span>
-                    <span class="task-header-title muted" v-else-if="task.pid">属于任务：<a href="javascript:void(0)" @click="init(task.pid)" class="muted">
+                    <span class="task-header-title muted" v-else-if="task.pid">属于任务：<a href="javascript:void(0)"
+                                                                                       @click="init(task.pid)"
+                                                                                       class="muted">
                                 {{ task.parent_task.name }}
                             </a>
                     </span>
@@ -39,7 +41,8 @@
                     <div class="task task-title-wrap" :class="{'done': task.task_state == 1}">
                         <a class="check-box" @click.stop="setTaskState(task)"><span
                                 class="ivu-icon ivu-icon-checkmark"></span></a>
-                        <Input v-model="task.name" v-if="show_name_edit && edit_task_id == task.id" class="task-input muted"
+                        <Input v-model="task.name" v-if="show_name_edit && edit_task_id == task.id"
+                               class="task-input muted"
                                @on-blur="editName(task)" :autofocus="true" element-id="title-input"/>
                         <h3 class="task-title" @click="show_name_edit = true;edit_task_id = task.id" v-else>
                             <Tooltip placement="top" content="点击即可编辑">
@@ -66,7 +69,7 @@
                                                      :src="task_user_list.executor.avatar" alt="">
                                                 <span class="muted"
                                                       style="line-height: 25px;">{{ task_user_list.executor.realname }}</span>
-                                                <Dropdown-menu slot="list" class="task-user-list" >
+                                                <Dropdown-menu slot="list" class="task-user-list">
                                                     <p class="m-sm">设置执行者</p>
                                                     <Dropdown-item
                                                             v-for="(user,index) in task_user_list.list" :key="index"
@@ -210,13 +213,16 @@
                                         <div class="note-aside muted">
                                             <Icon type="ios-stopwatch-outline" size="24"></Icon>
                                             <span class="title">执行状态</span>
-                                            <Dropdown class="task-level-list" trigger="click" @on-click="changeTaskExecute">
+                                            <Dropdown class="task-level-list" trigger="click"
+                                                      @on-click="changeTaskExecute">
                                                 <a class="muted">{{ task.task_execute_name }}</a>
                                                 <Dropdown-menu slot="list">
-                                                    <Dropdown-item v-for="(task_execute,index) in task_execute_state_list"
-                                                                   :key="index"
-                                                                   :name="index">
-                                                        <Button type="text" size="small">{{ task_execute.name }}</Button>
+                                                    <Dropdown-item
+                                                            v-for="(task_execute,index) in task_execute_state_list"
+                                                            :key="index"
+                                                            :name="index">
+                                                        <Button type="text" size="small">{{ task_execute.name }}
+                                                        </Button>
                                                         <Icon type="ios-checkmark-empty" size="24" style="float: right"
                                                               class="muted"
                                                               v-if="task_execute.key == task.execute_state"></Icon>
@@ -237,7 +243,8 @@
                                         <div class="note-aside muted">
                                             <Icon type="ios-circle-outline" size="24"></Icon>
                                             <span class="title">优先级</span>
-                                            <Dropdown class="task-level-list" trigger="click" @on-click="changeTaskLevel">
+                                            <Dropdown class="task-level-list" trigger="click"
+                                                      @on-click="changeTaskLevel">
                                                 <Button :type="task.task_level_show_type" size="small">{{
                                                     task.task_level_name }}
                                                 </Button>
@@ -245,7 +252,8 @@
                                                     <Dropdown-item v-for="(task_level,index) in task_level_list"
                                                                    :key="index"
                                                                    :name="index">
-                                                        <Button :type="task_level.show_type" size="small">{{ task_level.name
+                                                        <Button :type="task_level.show_type" size="small">{{
+                                                            task_level.name
                                                             }}
                                                         </Button>
                                                         <Icon type="ios-checkmark-empty" size="24" style="float: right"
@@ -276,7 +284,8 @@
                                                     <Icon type="ios-plus-outline" size="20"></Icon>
                                                 </a>
                                                 <Dropdown-menu slot="list">
-                                                    <Dropdown-item v-for="(task_tag,index) in task_tag_list" :key="index"
+                                                    <Dropdown-item v-for="(task_tag,index) in task_tag_list"
+                                                                   :key="index"
                                                                    :name="index">
                                                         <Button size="small" type="text">{{ task_tag.name }}</Button>
                                                         <Icon type="ios-checkmark-empty" size="24" style="float: right"
@@ -309,11 +318,15 @@
                             <div class="task-detail-handler-set text-default" style="padding-left: 0;">
                                 <Row style="padding-bottom: 10px;">
                                     <i-col v-if="task.children_task">
-                                        <SlickList  lockAxis="y" axis="y" :pressDelay="500" v-model="task.children_task" @input="SlickEvent" class="children-task-list">
-                                            <SlickItem class="children-task" v-for="(children,index) in task.children_task"
-                                                :key="children.id" :index="index" v-if="children.task_state == 0">
+                                        <SlickList lockAxis="y" axis="y" :pressDelay="500" v-model="task.children_task"
+                                                   @input="SlickEvent" class="children-task-list">
+                                            <SlickItem class="children-task"
+                                                       v-for="(children,index) in task.children_task"
+                                                       :key="children.id" :index="index"
+                                                       v-if="children.task_state == 0">
                                                 <div class="link-head">
-                                                    <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
+                                                    <div class="task children-task-title-wrap"
+                                                         :class="{'done': children.task_state == 1}">
                                                         <a class="check-box" @click.stop="setTaskState(children,false)"><span
                                                                 class="ivu-icon ivu-icon-checkmark"></span></a>
                                                         <Input v-model="children.name"
@@ -336,11 +349,14 @@
                                                                       v-if="project_user_list.length > 0">
                                                                 <img class="task-avatar avatar img-circle img-24"
                                                                      :src="children.executor_user_info.avatar" alt="">
-                                                                <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
-                                                                <a class="task-detail-icon muted" @click.stop="init(children.id)">
+                                                                <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span>
+                                                                </p>
+                                                                <a class="task-detail-icon muted"
+                                                                   @click.stop="init(children.id)">
                                                                     <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
                                                                 </a>
-                                                                <Dropdown-menu slot="list" class="children-task-user-list">
+                                                                <Dropdown-menu slot="list"
+                                                                               class="children-task-user-list">
                                                                     <p class="m-sm">设置执行者</p>
                                                                     <Dropdown-item
                                                                             v-for="(user,index) in project_user_list"
@@ -361,9 +377,10 @@
 
                                             </SlickItem>
                                             <div class="children-task" v-for="(children,index) in task.children_task"
-                                                       :key="children.id" :index="index" v-if="children.task_state == 1">
+                                                 :key="children.id" :index="index" v-if="children.task_state == 1">
                                                 <div class="link-head">
-                                                    <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
+                                                    <div class="task children-task-title-wrap"
+                                                         :class="{'done': children.task_state == 1}">
                                                         <a class="check-box" @click.stop="setTaskState(children,false)"><span
                                                                 class="ivu-icon ivu-icon-checkmark"></span></a>
                                                         <Input v-model="children.name"
@@ -386,11 +403,14 @@
                                                                       v-if="project_user_list.length > 0">
                                                                 <img class="task-avatar avatar img-circle img-24"
                                                                      :src="children.executor_user_info.avatar" alt="">
-                                                                <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
-                                                                <a class="task-detail-icon muted" @click.stop="init(children.id)">
+                                                                <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span>
+                                                                </p>
+                                                                <a class="task-detail-icon muted"
+                                                                   @click.stop="init(children.id)">
                                                                     <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
                                                                 </a>
-                                                                <Dropdown-menu slot="list" class="children-task-user-list">
+                                                                <Dropdown-menu slot="list"
+                                                                               class="children-task-user-list">
                                                                     <p class="m-sm">设置执行者</p>
                                                                     <Dropdown-item
                                                                             v-for="(user,index) in project_user_list"
@@ -622,7 +642,8 @@
                                                         <div class="activity-body-coyness readable muted">
                                                             <span> {{ task_log.realname + ' ' + task_log.content }} </span>
                                                             <div class="activity-content overflow"
-                                                                 @click="showLogContent($event)" v-if="task_log.content">
+                                                                 @click="showLogContent($event)"
+                                                                 v-if="task_log.content">
                                                                 <blockquote class="activity-description"
                                                                             v-html="task_log.memo"></blockquote>
                                                                 <blockquote class="activity-content-detail"
@@ -631,7 +652,9 @@
                                                         </div>
                                                     </div>
                                                     <div v-else>
-                                                        <img :src="task_log.user_info.avatar" class="comment-avatar avatar img-circle img-24 pull-left m-r-sm" alt="">
+                                                        <img :src="task_log.user_info.avatar"
+                                                             class="comment-avatar avatar img-circle img-24 pull-left m-r-sm"
+                                                             alt="">
                                                         <div class="react-time-stamp muted pull-right hinted">
                                                             <Tooltip placement="top"
                                                                      :content="showTaskLogTime(task_log.create_time,false)">
@@ -644,7 +667,7 @@
                                                             <span> {{ task_log.realname }} </span>
                                                             <div class="activity-content overflow">
                                                                 <p class="task-comment-content"
-                                                                            v-html="task_log.memo"></p>
+                                                                   v-html="task_log.memo"></p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -660,8 +683,11 @@
                         </div>
                     </div>
                     <div class="task-comment">
-                        <Input class="comment-content" v-model="task_comment" placeholder="发表评论" style="width: 480px"></Input>
-                        <Button type="primary" :disabled="task_comment==''" @click="commitComment" style="width: 70px;margin-left: 10px;">评论</Button>
+                        <Input type="textarea" :rows="comment_rows" class="comment-content" v-model="task_comment"
+                               placeholder="发表评论，按回车换行" style="width: 480px"></Input>
+                        <Button type="primary" :disabled="task_comment==''" @click="commitComment"
+                                style="width: 70px;margin-left: 10px;">评论
+                        </Button>
                     </div>
                     <div slot="footer">
                     </div>
@@ -761,8 +787,9 @@
                     }
                 },
                 task_comment: '',
+                comment_rows: 1,
                 create_task: false,
-                new_task:{
+                new_task: {
                     pid: 0,
                     name: '',
                     desc: '',
@@ -863,10 +890,17 @@
                 if (value) {
                     $(".task-input input").focus()
                 }
+            },
+            task_comment(value) {
+                const count = value.split("\n").length;
+                console.log(count)
+                if (count <= 10) {
+                    this.comment_rows = count;
+                }
             }
         },
         methods: {
-            init(task_id){
+            init(task_id) {
                 if (task_id) {
                     this.task_id = task_id;
                 }
@@ -945,7 +979,7 @@
                     }
                 });
             },
-            SlickEvent(list){
+            SlickEvent(list) {
                 console.log(list);
                 const send = [];
                 list.forEach(function (v, k) {
@@ -994,14 +1028,14 @@
                     }
                 });
             },
-            showTaskCount(list,state){
+            showTaskCount(list, state) {
                 let count = 0;
                 if (!list) {
                     return count;
                 }
                 if (state == -1) {
                     count = list.length;
-                }else{
+                } else {
                     list.forEach(function (v, k) {
                         if (v.task_state == state) {
                             count++;
@@ -1055,7 +1089,7 @@
             },
             setTaskState(task, emit = true) {
                 let app = this;
-                task.task_state = task.task_state == 0 ?  1 :  0;
+                task.task_state = task.task_state == 0 ? 1 : 0;
                 setTaskState(task.id, task.task_state).then(res => {
                     const result = utils.showBack(res);
                     if (result && emit) {
@@ -1064,14 +1098,14 @@
                     app.getTaskLogList();
                 });
             },
-            commitComment(){
+            commitComment() {
                 let app = this;
                 const comment = this.task_comment.trim();
                 if (!comment) {
-                    app.$Message.success('至少说点啥吧~')
+                    app.$Message.warning('至少说点啥吧~')
                     return false;
                 }
-                addTaskComment(app.task_id, comment).then(res=>{
+                addTaskComment(app.task_id, comment).then(res => {
                     app.task_comment = '';
                     app.getTaskLogList();
                 });
@@ -1285,7 +1319,7 @@
                 });
             },
             showTaskSettingTime(time) {
-                if(typeof time == "string"){
+                if (typeof time == "string") {
                     time = new Date(time).getTime() / 1000;
                 }
                 if (time > 0) {
@@ -1512,7 +1546,7 @@
     }
 </script>
 <style>
-    .task-detail-modal .task-comment{
+    .task-detail-modal .task-comment {
         position: fixed;
         bottom: 94px;
         width: 600px;
@@ -1520,19 +1554,29 @@
         z-index: 2;
         background: #FFF;
     }
-    .task-detail-modal .comment-content{
+
+    .task-detail-modal .comment-content {
 
     }
-    .task-detail-modal .comment-avatar{
+
+    .task-detail-modal .task-comment-content {
+        white-space: normal;
+        word-break: break-all;
+        word-wrap: break-word;
+    }
+
+    .task-detail-modal .comment-avatar {
         position: absolute;
         left: 5px;
         width: 34px;
         height: 34px;
     }
-    .ivu-select-dropdown{
+
+    .ivu-select-dropdown {
         z-index: 2000 !important;
         max-height: inherit !important;
     }
+
     .task-detail-modal .ivu-modal {
         top: 50px;
     }
@@ -1647,6 +1691,7 @@
         /*left: 0 !important;*/
         /*top: 0 !important;*/
     }
+
     .task-detail-icon {
         position: absolute;
         font-size: 18px;
@@ -1671,7 +1716,8 @@
         text-align: left;
         margin-left: 15px;
     }
-    .task-input .ivu-input{
+
+    .task-input .ivu-input {
         height: 26px;
     }
 
@@ -1685,9 +1731,11 @@
         padding-left: 5px;
         z-index: 99999;
     }
-    .children-task .ivu-input{
+
+    .children-task .ivu-input {
         height: 28px;
     }
+
     .children-task-title-wrap {
         padding: 5px;
     }
@@ -1697,7 +1745,7 @@
         width: 200px;
     }
 
-    .task-time{
+    .task-time {
         /*width: 160px;   */
         height: 24px;
         line-height: 2;
@@ -1705,7 +1753,8 @@
         padding-right: 50px;
         padding-left: 10px;
     }
-    .task-avatar{
+
+    .task-avatar {
         margin-right: 20px;
         float: right;
         margin-left: 10px;
@@ -1752,7 +1801,7 @@
         margin-right: 10px;
     }
 
-    .task-user-list{
+    .task-user-list {
         width: 200px;
     }
 
