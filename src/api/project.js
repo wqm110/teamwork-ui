@@ -299,3 +299,13 @@ export function doProjectTemplate(action = 'add', data) {
     return $http.post(url, data);
 }
 
+export function addTaskComment(task_id, comment) {
+    return $http.post('Project_Task.addTaskComment', {task_id: task_id, memo: comment});
+}
+export function editTaskComment(id, comment) {
+    return $http.post('Project_Task.editTaskComment', {id: id, memo: comment});
+}
+export function delTaskComment(id) {
+    return $http.post('Project_Task.delTaskComment', {id: id});
+}
+

@@ -51,597 +51,620 @@
                     </div>
                 </div>
                 <vue-scroll :ops="ops">
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap">
-                        <div class="task-detail-handler-set task-base">
-                            <Row>
-                                <i-col span="8">
-                                    <!--<div class="executor">执行者</div>-->
-                                    <div @click="show_task_user = !show_task_user" style="cursor: pointer;">
-                                        <Dropdown :transfer="true" trigger="click"
-                                                  @on-click="addTaskExecutorUser"
-                                                  v-if="task_user_list.list.length > 0"
-                                        >
-                                            <img class="avatar img-circle img-24 pull-left m-r-sm"
-                                                 :src="task_user_list.executor.avatar" alt="">
-                                            <span class="muted"
-                                                  style="line-height: 25px;">{{ task_user_list.executor.realname }}</span>
-                                            <Dropdown-menu slot="list" class="task-user-list" >
-                                                <p class="m-sm">设置执行者</p>
-                                                <Dropdown-item
-                                                        v-for="(user,index) in task_user_list.list" :key="index"
-                                                        :name="user.user_id">
-                                                    <img class="avatar img-circle img-24 pull-left m-r-sm "
-                                                         :src="user.user_info.avatar">
-                                                    <span class="muted"
-                                                          style="line-height: 25px;">{{ user.user_info.realname }}</span>
-                                                    <Icon type="ios-checkmark-empty"
-                                                          v-if="user.is_executor == 1"></Icon>
-                                                </Dropdown-item>
-                                            </Dropdown-menu>
-                                        </Dropdown>
-                                    </div>
-                                </i-col>
-                                <i-col span="16">
-                                    <!--<div class="m-b-xs">开始时间 </div>-->
-                                    <!--<div class="task-date-item">-->
-                                    <!--<Date-picker-->
-                                    <!--confirm-->
-                                    <!--:open="begin_open"-->
-                                    <!--:value="date_picker_data.task_begin_time"-->
-                                    <!--type="datetime"-->
-                                    <!--format="yyyy-MM-dd HH:mm"-->
-                                    <!--placement="bottom"-->
-                                    <!--@on-change="handleBeginChange"-->
-                                    <!--@on-ok="handleOk('begin')"-->
-                                    <!--@on-clear="begin_open = false">-->
-                                    <!--<Tooltip placement="top" content="点击设置开始时间">-->
-                                    <!--<a href="javascript:void(0)" class="muted" @click="handleClick('begin')">-->
-                                    <!--<Icon type="android-calendar" size="16"></Icon>-->
-                                    <!--<template v-if="date_picker_data.task_begin_time === null || date_picker_data.task_begin_time === ''">设置开始时间</template>-->
-                                    <!--<template v-else>{{ date_picker_data.task_begin_time_format }}-->
-                                    <!--</template>-->
-                                    <!--</a>-->
-                                    <!--</Tooltip>-->
-                                    <!--</Date-picker>-->
-                                    <!--</div>-->
-                                    <!--<div class="task-date-item">-->
-                                    <!--<span class="muted">–</span>-->
-                                    <!--</div>-->
-                                    <div class="task-date-item">
-                                        <Date-picker
-                                                confirm
-                                                :open="open"
-                                                :value="date_picker_data.task_end_time"
-                                                type="datetime"
-                                                format="yyyy-MM-dd HH:mm"
-                                                placement="bottom"
-                                                @on-change="handleChange"
-                                                @on-ok="handleOk('end')"
-                                                @on-clear="handleClear('end')">
-                                            <Tooltip placement="top" content="点击设置截止时间">
-                                                <a href="javascript:void(0)" class="date-title muted"
-                                                   @click="handleClick('end')">
-                                                    <Icon type="android-calendar" size="20"></Icon>
-                                                    <span class="m-l-xs">
-                                                            <template
-                                                                    v-if="date_picker_data.task_end_time === null || date_picker_data.task_end_time === ''">设置截止时间</template>
-                                                        <template
-                                                                v-else>{{ date_picker_data.task_end_time_format }}</template>
-                                                        </span>
-                                                </a>
-                                            </Tooltip>
-                                        </Date-picker>
-                                    </div>
-                                    <div class="task-date-item">
-                                        <Date-picker
-                                                confirm
-                                                :open="remind_open"
-                                                :value="date_picker_data.task_remind_time"
-                                                type="datetime"
-                                                format="yyyy-MM-dd HH:mm"
-                                                placement="bottom"
-                                                @on-change="handleRemindChange"
-                                                @on-ok="handleOk('remind_time')"
-                                                @on-clear="handleClear('remind_time')">
-                                            <Tooltip placement="top" :content="remind_content">
-                                                <a href="javascript:void(0)" class="date-title muted"
-                                                   :class="{'primary': date_picker_data.task_remind_time !== null && date_picker_data.task_remind_time !== ''}"
-                                                   @click="handleClick('remind_time')">
-                                                    <Icon type="android-alarm-clock" size="20"></Icon>
-                                                </a>
-                                            </Tooltip>
-                                        </Date-picker>
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap"
-                         :style="{'height: 250px;': !hidden_task_content}">
-                        <div class="task-detail-handler-set">
-                            <Row>
-                                <i-col>
-                                    <div style="padding-left: 1px;">
-                                        <div class="note-aside muted"
-                                             @click="hidden_task_content = !hidden_task_content">
-                                            <Icon type="ios-paper-outline"
-                                                  style="float: left;font-size: 24px;position: absolute;top: 5px;"></Icon>
-                                            <!--<Tooltip placement="top" content="点击即可编辑">-->
-                                            <span class="task-content" v-if="task.desc != '' && task.desc != null"
-                                                  v-html="task.desc"
-                                                  :class="{'hidden':!hidden_task_content}"></span>
-                                            <!--</Tooltip>-->
-                                            <a class="muted title"
-                                               href="javascript:void(0)"
-                                               v-if=" (task.desc == '' || task.desc == null) && hidden_task_content"
-                                               style="margin-left: 20px;cursor: pointer;line-height: 33px;"
-                                               @click.stop="hidden_task_content = !hidden_task_content">添加备注</a>
-                                        </div>
-                                    </div>
-                                    <div style="padding-top:0;" :class="{'hidden': hidden_task_content}">
-                                        <editor ref="vueWangeditor" @load="editorLoad" @change="editorChange"
-                                                :width="editor_style.width" :height="editor_style.height"
-                                                :uploadImgUrl="uploadImgUrl" :uploadParams="uploadParams"
-                                                :uploadHeaders="uploadHeaders" :menus="menus"
-                                                id="editor"></editor>
-                                        <div class="task-content-footer">
-                                            <Button type="text" class="middle-btn"
-                                                    @click="hidden_task_content = !hidden_task_content">
-                                                取消
-                                            </Button>
-                                            <Button type="primary" class="middle-btn" @click="saveContent">保存
-                                            </Button>
-                                        </div>
-
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap">
-                        <div class="task-detail-handler-set">
-                            <Row>
-                                <i-col>
-                                    <div class="note-aside muted">
-                                        <Icon type="ios-stopwatch-outline" size="24"></Icon>
-                                        <span class="title">执行状态</span>
-                                        <Dropdown class="task-level-list" trigger="click" @on-click="changeTaskExecute">
-                                            <a class="muted">{{ task.task_execute_name }}</a>
-                                            <Dropdown-menu slot="list">
-                                                <Dropdown-item v-for="(task_execute,index) in task_execute_state_list"
-                                                               :key="index"
-                                                               :name="index">
-                                                    <Button type="text" size="small">{{ task_execute.name }}</Button>
-                                                    <Icon type="ios-checkmark-empty" size="24" style="float: right"
-                                                          class="muted"
-                                                          v-if="task_execute.key == task.execute_state"></Icon>
-                                                </Dropdown-item>
-                                            </Dropdown-menu>
-                                        </Dropdown>
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap">
-                        <div class="task-detail-handler-set">
-                            <Row>
-                                <i-col>
-                                    <div class="note-aside muted">
-                                        <Icon type="ios-circle-outline" size="24"></Icon>
-                                        <span class="title">优先级</span>
-                                        <Dropdown class="task-level-list" trigger="click" @on-click="changeTaskLevel">
-                                            <Button :type="task.task_level_show_type" size="small">{{
-                                                task.task_level_name }}
-                                            </Button>
-                                            <Dropdown-menu slot="list">
-                                                <Dropdown-item v-for="(task_level,index) in task_level_list"
-                                                               :key="index"
-                                                               :name="index">
-                                                    <Button :type="task_level.show_type" size="small">{{ task_level.name
-                                                        }}
-                                                    </Button>
-                                                    <Icon type="ios-checkmark-empty" size="24" style="float: right"
-                                                          class="muted" v-if="task_level.key == task.pri"></Icon>
-                                                </Dropdown-item>
-                                            </Dropdown-menu>
-                                        </Dropdown>
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap">
-                        <div class="task-detail-handler-set">
-                            <Row>
-                                <i-col>
-                                    <div class="note-aside muted">
-                                        <Icon type="ios-pricetag-outline" size="24"></Icon>
-                                        <span class="title">标签</span>
-                                        <Tag class="tag-circle" v-for="(tag,tag_index) in task.task_tag_item_list"
-                                             :key="tag.key" :name="tag_index" :color="tag.color" closable
-                                             @on-close="removeTaskTag">{{ tag.name }}
-                                        </Tag>
-                                        <Dropdown class="task-level-list" trigger="click" @on-click="addTaskTag">
-                                            <a class="muted m-l-xs">
-                                                <Icon type="ios-plus-outline" size="20"></Icon>
-                                            </a>
-                                            <Dropdown-menu slot="list">
-                                                <Dropdown-item v-for="(task_tag,index) in task_tag_list" :key="index"
-                                                               :name="index">
-                                                    <Button size="small" type="text">{{ task_tag.name }}</Button>
-                                                    <Icon type="ios-checkmark-empty" size="24" style="float: right"
-                                                          class="muted" v-if="showTaskSelect(task_tag.key)"></Icon>
-                                                </Dropdown-item>
-                                            </Dropdown-menu>
-                                        </Dropdown>
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content" style="margin-bottom: 0">
-                    <div class="detail-white-card task-detail-handler-wrap no-border">
-                        <div class="task-detail-handler-set">
-                            <Row>
-                                <i-col>
-                                    <div class="note-aside muted">
-                                        <Icon type="ios-list-outline" size="24"></Icon>
-                                        <span class="title">子任务 <span v-show="task.children_task">· {{showTaskCount(task.children_task,1)}}/{{showTaskCount(task.children_task,-1)}}</span></span>
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content">
-                    <div class="detail-white-card task-detail-handler-wrap">
-                        <div class="task-detail-handler-set text-default" style="padding-left: 0;">
-                            <Row style="padding-bottom: 10px;">
-                                <i-col v-if="task.children_task">
-                                    <SlickList  lockAxis="y" axis="y" :pressDelay="500" v-model="task.children_task" @input="SlickEvent" class="children-task-list">
-                                        <SlickItem class="children-task" v-for="(children,index) in task.children_task"
-                                            :key="children.id" :index="index" v-if="children.task_state == 0">
-                                            <div class="link-head">
-                                                <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
-                                                    <a class="check-box" @click.stop="setTaskState(children,false)"><span
-                                                            class="ivu-icon ivu-icon-checkmark"></span></a>
-                                                    <Input v-model="children.name"
-                                                           v-if="show_name_edit && edit_task_id == children.id"
-                                                           class="task-input muted"
-                                                           @on-blur="editName(children)" :autofocus="true"/>
-                                                    <p class="task-title"
-                                                       @click="show_name_edit = true; edit_task_id = children.id"
-                                                       v-else>
-                                                        <Tooltip placement="top" content="点击即可编辑">
-                                <span :class="{'muted':children.task_state == 1}" style="line-height: 25px">
-                                    {{ children.name }}
-                                </span>
-                                                        </Tooltip>
-                                                    </p>
-                                                    <div @click="show_task_user = !show_task_user"
-                                                         style="cursor: pointer;">
-                                                        <Dropdown :transfer="true" trigger="click"
-                                                                  @on-click="addTaskExecutorUser($event,children.id)"
-                                                                  v-if="project_user_list.length > 0">
-                                                            <img class="task-avatar avatar img-circle img-24"
-                                                                 :src="children.executor_user_info.avatar" alt="">
-                                                            <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
-                                                            <a class="task-detail-icon muted" @click.stop="init(children.id)">
-                                                                <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
-                                                            </a>
-                                                            <Dropdown-menu slot="list" class="children-task-user-list">
-                                                                <p class="m-sm">设置执行者</p>
-                                                                <Dropdown-item
-                                                                        v-for="(user,index) in project_user_list"
-                                                                        :key="index"
-                                                                        :name="user.id">
-                                                                    <img class="avatar img-circle img-24 pull-left m-r-sm "
-                                                                         :src="user.avatar">
-                                                                    <span class="muted"
-                                                                          style="line-height: 25px;">{{ user.realname }}</span>
-                                                                    <Icon type="ios-checkmark-empty"
-                                                                          v-if="user.id == children.executor_user_info.id"></Icon>
-                                                                </Dropdown-item>
-                                                            </Dropdown-menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </SlickItem>
-                                        <div class="children-task" v-for="(children,index) in task.children_task"
-                                                   :key="children.id" :index="index" v-if="children.task_state == 1">
-                                            <div class="link-head">
-                                                <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
-                                                    <a class="check-box" @click.stop="setTaskState(children,false)"><span
-                                                            class="ivu-icon ivu-icon-checkmark"></span></a>
-                                                    <Input v-model="children.name"
-                                                           v-if="show_name_edit && edit_task_id == children.id"
-                                                           class="task-input muted"
-                                                           @on-blur="editName(children)" :autofocus="true"/>
-                                                    <p class="task-title"
-                                                       @click="show_name_edit = true; edit_task_id = children.id"
-                                                       v-else>
-                                                        <Tooltip placement="top" content="点击即可编辑">
-                                <span :class="{'muted':children.task_state == 1}" style="line-height: 25px">
-                                    {{ children.name }}
-                                </span>
-                                                        </Tooltip>
-                                                    </p>
-                                                    <div @click="show_task_user = !show_task_user"
-                                                         style="cursor: pointer;">
-                                                        <Dropdown :transfer="true" trigger="click"
-                                                                  @on-click="addTaskExecutorUser($event,children.id)"
-                                                                  v-if="project_user_list.length > 0">
-                                                            <img class="task-avatar avatar img-circle img-24"
-                                                                 :src="children.executor_user_info.avatar" alt="">
-                                                            <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
-                                                            <a class="task-detail-icon muted" @click.stop="init(children.id)">
-                                                                <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
-                                                            </a>
-                                                            <Dropdown-menu slot="list" class="children-task-user-list">
-                                                                <p class="m-sm">设置执行者</p>
-                                                                <Dropdown-item
-                                                                        v-for="(user,index) in project_user_list"
-                                                                        :key="index"
-                                                                        :name="user.id">
-                                                                    <img class="avatar img-circle img-24 pull-left m-r-sm "
-                                                                         :src="user.avatar">
-                                                                    <span class="muted"
-                                                                          style="line-height: 25px;">{{ user.realname }}</span>
-                                                                    <Icon type="ios-checkmark-empty"
-                                                                          v-if="user.id == children.executor_user_info.id"></Icon>
-                                                                </Dropdown-item>
-                                                            </Dropdown-menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </SlickList>
-                                </i-col>
-                                <i-col>
-                                    <div class="children-task" v-show="create_task">
-                                        <div class="link-head">
-                                            <div class="task children-task-title-wrap">
-                                                <Input v-model="new_task.name"
-                                                       class="task-input muted"/>
-                                                <div @click="show_task_user = !show_task_user"
-                                                     style="cursor: pointer;">
-                                                    <Dropdown :transfer="true" trigger="click"
-                                                              @on-click="selectExecutor"
-                                                              v-if="project_user_list.length > 0">
-                                                        <img class="task-avatar avatar img-circle img-24"
-                                                             :src="default_executor.avatar" alt="">
-                                                        <p class="task-time"></p>
-                                                        <Dropdown-menu slot="list" class="children-task-user-list">
-                                                            <p class="m-sm">设置执行者</p>
-                                                            <Dropdown-item
-                                                                    v-for="(user,index) in project_user_list"
-                                                                    :key="index"
-                                                                    :name="index">
-                                                                <img class="avatar img-circle img-24 pull-left m-r-sm "
-                                                                     :src="user.avatar">
-                                                                <span class="muted"
-                                                                      style="line-height: 25px;">{{ user.realname }}</span>
-                                                                <Icon type="ios-checkmark-empty"
-                                                                      v-if="user.id == default_executor.id"></Icon>
-                                                            </Dropdown-item>
-                                                        </Dropdown-menu>
-                                                    </Dropdown>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="submit-set pull-right m-t-xs ">
-                                            <Button type="ghost" class="small-btn"
-                                                    @click="create_task = false">取消
-                                            </Button>
-                                            <Button type="primary" class="small-btn"
-                                                    @click="addTask">创建
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </i-col>
-                            </Row>
-                            <div style="height: 22px;padding-left: 10px;" v-show="!create_task">
-                                <a href="javascript:void(0)" @click="create_task = true">
-                                    <Icon type="plus-circled" style="float: left;font-size: 22px;"></Icon>
-                                    <span style="float: left;margin-top: 2px; margin-left: 5px;">添加子任务</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content" style="margin-bottom: 0">
-                    <div class="detail-white-card task-detail-handler-wrap no-border">
-                        <div class="task-detail-handler-set">
-                            <Row>
-                                <i-col>
-                                    <div class="note-aside muted">
-                                        <Icon type="link" size="24"></Icon>
-                                        <span class="title">关联的文件</span>
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content" style="margin-bottom: 0">
-                    <div class="detail-white-card task-detail-handler-wrap no-border">
-                        <div class="task-detail-handler-set text-default" style="padding-left: 0;">
-                            <Row>
-                                <i-col>
-                                    <ul class="file-list" v-if="file_list.length > 0">
-                                        <li class="link" v-for="(file,index) in file_list" :key="index">
-                                            <div class="link-head">
-                                                <div class="link-content m-r-sm">
-                                                    <svg class="icon link-icon" aria-hidden="true">
-                                                        <use :href="formatFile(file.extension)"></use>
-                                                    </svg>
-                                                </div>
-                                                <div class="link-title link-content" @click="downloadFile(file.id)">
-                                                   <span>
-                                                    {{ file.title }}
-                                                    </span>
-                                                </div>
-                                                <div class="link-content pull-right" style="margin-top: 8px;">
-                                                    <Dropdown trigger="click"
-                                                              @on-click="file_id = file.id,file_index = index,delete_file_modal = !delete_file_modal">
-                                                        <a href="javascript:void(0)" class="muted">
-                                                            操作
-                                                            <Icon type="arrow-down-b"></Icon>
-                                                        </a>
-                                                        <Dropdown-menu slot="list">
-                                                            <Dropdown-item>删除</Dropdown-item>
-                                                        </Dropdown-menu>
-                                                    </Dropdown>
-                                                </div>
-
-                                            </div>
-
-                                        </li>
-                                    </ul>
-                                    <!-- <Table :width="auto" :show-header="false" :columns="file_columns" :data="file_list"></Table>-->
-                                </i-col>
-                            </Row>
-                            <div class="task-file-upload">
-                                <Upload ref="upload"
-                                        :action="upload_config.url"
-                                        :name="upload_config.name"
-                                        :headers="upload_config.headers"
-                                        :data="task"
-                                        :show-upload-list="false"
-                                        :on-progress="uploadProgress"
-                                        :on-success="uploadSuccess">
-                                    <a href="javascript:void(0)">
-                                        <Icon type="plus-circled" style="float: left;font-size: 22px;"></Icon>
-                                        <span style="float: left;margin-top: 2px; margin-left: 5px; ">添加文件</span>
-                                    </a>
-                                </Upload>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-content" style="margin-bottom:0;padding: 0">
-                    <div class="detail-white-card task-detail-handler-wrap last-detail-white-card">
-                        <div class="task-detail-handler-set task-user-join">
-                            <Row>
-                                <i-col>
-                                    <div style="margin-bottom: 5px;">参与者</div>
-                                    <div class="note-aside">
-                                        <Tooltip placement="top" :content="user.user_info.realname"
-                                                 v-for="(user,index) in task_user_list.list"
-                                                 :key="index">
-                                            <img class="avatar img-circle img-24 pull-left item-avatar"
-                                                 style="margin-top: 4px;"
-                                                 :src="user.user_info.avatar" alt="">
-                                        </Tooltip>
-                                        <!--   <Poptip title="提示标题" content="提示内容" placement="bottom">
-                                               <a  href="javascript:void(0)">
-                                                   <Icon type="plus-circled" class="text-navy " style="font-size: 26px;"></Icon>
-                                               </a>
-                                               <div class="api" slot="content">
-                                                   <p class="m-b-sm">添加成员</p>
-                                                   <div>
-                                                         <span class="avatar img-circle img-24 pull-left m-r-sm "
-                                                 style="background-image: url(https://striker.teambition.net/thumbnail/110t8768eb3af2155ab8eadce6ce01c98e21/w/200/h/200);"></span>
-                                                       <span class="muted" style="line-height: 25px;">vilson</span>
-                                                   </div>
-                                               </div>
-                                           </Poptip>-->
-                                        <div style="display: inline-block">
+                    <div class="detail-content">
+                        <div class="detail-white-card task-detail-handler-wrap">
+                            <div class="task-detail-handler-set task-base">
+                                <Row>
+                                    <i-col span="8">
+                                        <!--<div class="executor">执行者</div>-->
+                                        <div @click="show_task_user = !show_task_user" style="cursor: pointer;">
                                             <Dropdown :transfer="true" trigger="click"
-                                                      @on-click="addTaskUser">
-                                                <a href="javascript:void(0)">
-                                                    <Icon type="plus-circled" class="text-navy "
-                                                          style="font-size: 26px;"></Icon>
-                                                </a>
-                                                <Dropdown-menu slot="list" class="task-user-list">
-                                                    <p class="m-sm">添加成员・{{ project_user_list.length }}</p>
-                                                    <!--<Dropdown-item style="height: 40px; ">-->
-                                                    <!--<Icon type="ios-person" class="pull-left"-->
-                                                    <!--style="font-size: 24px;"></Icon>-->
-                                                    <!--<span class="pull-left task-user-item"> 所有成员・{{ project_user_list.length }} </span>-->
-                                                    <!--</Dropdown-item>-->
+                                                      @on-click="addTaskExecutorUser"
+                                                      v-if="task_user_list.list.length > 0"
+                                            >
+                                                <img class="avatar img-circle img-24 pull-left m-r-sm"
+                                                     :src="task_user_list.executor.avatar" alt="">
+                                                <span class="muted"
+                                                      style="line-height: 25px;">{{ task_user_list.executor.realname }}</span>
+                                                <Dropdown-menu slot="list" class="task-user-list" >
+                                                    <p class="m-sm">设置执行者</p>
                                                     <Dropdown-item
-                                                            v-for="(user,index) in project_user_list" :key="index"
-                                                            :name="user.u_user_id">
-                                                        <img class="avatar img-circle img-24 pull-left item-avatar"
-                                                             :src="user.avatar">
+                                                            v-for="(user,index) in task_user_list.list" :key="index"
+                                                            :name="user.user_id">
+                                                        <img class="avatar img-circle img-24 pull-left m-r-sm "
+                                                             :src="user.user_info.avatar">
                                                         <span class="muted"
-                                                              style="line-height: 25px;">{{ user.realname }}</span>
-                                                        <Icon type="ios-checkmark-empty" v-if="user.is_add"></Icon>
+                                                              style="line-height: 25px;">{{ user.user_info.realname }}</span>
+                                                        <Icon type="ios-checkmark-empty"
+                                                              v-if="user.is_executor == 1"></Icon>
                                                     </Dropdown-item>
                                                 </Dropdown-menu>
                                             </Dropdown>
                                         </div>
-                                    </div>
-                                </i-col>
-                            </Row>
-                        </div>
-                        <div class="task-detail-handler-set" style="border-top:1px solid #f2f2f2">
-                            <Row>
-                                <i-col class="activities-timeline early-shown">
-                                    <div class="activities-list-wrap">
-                                        <div class="activity-early-wrap"><a
-                                                class="activity-early-handler link-add-handler">
-                                            <span class="activity-early-hidden" @click="getTaskLogList(1)"
-                                                  v-if="task_log_list.count > 5 && task_log_list.list.length <= 5">显示较早的 {{ task_log_list.count - 5}} 条动态</span>
-                                            <span v-if="task_log_list.count > 5 && task_log_list.list.length > 5"
-                                                  @click="getTaskLogList()"
-                                                  class="activity-early-shown">隐藏较早的动态</span>
-                                            <!--<span-->
-                                            <!--class="activity-early-loading">正在载入更早的动态...</span>-->
-                                        </a></div>
-                                        <ul class="activities-list">
-                                            <li class="activity creator"
-                                                v-for="(task_log,index) in task_log_list.list" :key="index">
-                                                <i :class="showLogIcon(task_log.log_type)"
-                                                   class="ivu-icon pull-left muted"></i>
-                                                <div class="react-time-stamp muted pull-right hinted">
-                                                    <Tooltip placement="top"
-                                                             :content="showTaskLogTime(task_log.create_time,false)">
-                                                        <time class="time-stamp">
-                                                            {{ showTaskLogTime(task_log.create_time, true) }}
-                                                        </time>
-                                                    </Tooltip>
-                                                </div>
-                                                <div class="activity-body-coyness readable muted">
-                                                    <span> {{ task_log.realname + ' ' + task_log.content }} </span>
-                                                    <div class="activity-content overflow"
-                                                         @click="showLogContent($event)" v-if="task_log.content">
-                                                        <blockquote class="activity-description"
-                                                                    v-html="task_log.memo"></blockquote>
-                                                        <blockquote class="activity-content-detail"
-                                                                    v-html="task_log.memo"></blockquote>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                        <div class="member-tip-wrap"></div>
-                                        <div class="involve-tip-wrap"></div>
-                                        <div class="activities-place-bottom"></div>
-                                    </div>
-                                </i-col>
-                            </Row>
+                                    </i-col>
+                                    <i-col span="16">
+                                        <!--<div class="m-b-xs">开始时间 </div>-->
+                                        <!--<div class="task-date-item">-->
+                                        <!--<Date-picker-->
+                                        <!--confirm-->
+                                        <!--:open="begin_open"-->
+                                        <!--:value="date_picker_data.task_begin_time"-->
+                                        <!--type="datetime"-->
+                                        <!--format="yyyy-MM-dd HH:mm"-->
+                                        <!--placement="bottom"-->
+                                        <!--@on-change="handleBeginChange"-->
+                                        <!--@on-ok="handleOk('begin')"-->
+                                        <!--@on-clear="begin_open = false">-->
+                                        <!--<Tooltip placement="top" content="点击设置开始时间">-->
+                                        <!--<a href="javascript:void(0)" class="muted" @click="handleClick('begin')">-->
+                                        <!--<Icon type="android-calendar" size="16"></Icon>-->
+                                        <!--<template v-if="date_picker_data.task_begin_time === null || date_picker_data.task_begin_time === ''">设置开始时间</template>-->
+                                        <!--<template v-else>{{ date_picker_data.task_begin_time_format }}-->
+                                        <!--</template>-->
+                                        <!--</a>-->
+                                        <!--</Tooltip>-->
+                                        <!--</Date-picker>-->
+                                        <!--</div>-->
+                                        <!--<div class="task-date-item">-->
+                                        <!--<span class="muted">–</span>-->
+                                        <!--</div>-->
+                                        <div class="task-date-item">
+                                            <Date-picker
+                                                    confirm
+                                                    :open="open"
+                                                    :value="date_picker_data.task_end_time"
+                                                    type="datetime"
+                                                    format="yyyy-MM-dd HH:mm"
+                                                    placement="bottom"
+                                                    @on-change="handleChange"
+                                                    @on-ok="handleOk('end')"
+                                                    @on-clear="handleClear('end')">
+                                                <Tooltip placement="top" content="点击设置截止时间">
+                                                    <a href="javascript:void(0)" class="date-title muted"
+                                                       @click="handleClick('end')">
+                                                        <Icon type="android-calendar" size="20"></Icon>
+                                                        <span class="m-l-xs">
+                                                                <template
+                                                                        v-if="date_picker_data.task_end_time === null || date_picker_data.task_end_time === ''">设置截止时间</template>
+                                                            <template
+                                                                    v-else>{{ date_picker_data.task_end_time_format }}</template>
+                                                            </span>
+                                                    </a>
+                                                </Tooltip>
+                                            </Date-picker>
+                                        </div>
+                                        <div class="task-date-item">
+                                            <Date-picker
+                                                    confirm
+                                                    :open="remind_open"
+                                                    :value="date_picker_data.task_remind_time"
+                                                    type="datetime"
+                                                    format="yyyy-MM-dd HH:mm"
+                                                    placement="bottom"
+                                                    @on-change="handleRemindChange"
+                                                    @on-ok="handleOk('remind_time')"
+                                                    @on-clear="handleClear('remind_time')">
+                                                <Tooltip placement="top" :content="remind_content">
+                                                    <a href="javascript:void(0)" class="date-title muted"
+                                                       :class="{'primary': date_picker_data.task_remind_time !== null && date_picker_data.task_remind_time !== ''}"
+                                                       @click="handleClick('remind_time')">
+                                                        <Icon type="android-alarm-clock" size="20"></Icon>
+                                                    </a>
+                                                </Tooltip>
+                                            </Date-picker>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
                         </div>
                     </div>
-                </div>
+                    <div class="detail-content">
+                        <div class="detail-white-card task-detail-handler-wrap"
+                             :style="{'height: 250px;': !hidden_task_content}">
+                            <div class="task-detail-handler-set">
+                                <Row>
+                                    <i-col>
+                                        <div style="padding-left: 1px;">
+                                            <div class="note-aside muted"
+                                                 @click="hidden_task_content = !hidden_task_content">
+                                                <Icon type="ios-paper-outline"
+                                                      style="float: left;font-size: 24px;position: absolute;top: 5px;"></Icon>
+                                                <!--<Tooltip placement="top" content="点击即可编辑">-->
+                                                <span class="task-content" v-if="task.desc != '' && task.desc != null"
+                                                      v-html="task.desc"
+                                                      :class="{'hidden':!hidden_task_content}"></span>
+                                                <!--</Tooltip>-->
+                                                <a class="muted title"
+                                                   href="javascript:void(0)"
+                                                   v-if=" (task.desc == '' || task.desc == null) && hidden_task_content"
+                                                   style="margin-left: 20px;cursor: pointer;line-height: 33px;"
+                                                   @click.stop="hidden_task_content = !hidden_task_content">添加备注</a>
+                                            </div>
+                                        </div>
+                                        <div style="padding-top:0;" :class="{'hidden': hidden_task_content}">
+                                            <editor ref="vueWangeditor" @load="editorLoad" @change="editorChange"
+                                                    :width="editor_style.width" :height="editor_style.height"
+                                                    :uploadImgUrl="uploadImgUrl" :uploadParams="uploadParams"
+                                                    :uploadHeaders="uploadHeaders" :menus="menus"
+                                                    id="editor"></editor>
+                                            <div class="task-content-footer">
+                                                <Button type="text" class="middle-btn"
+                                                        @click="hidden_task_content = !hidden_task_content">
+                                                    取消
+                                                </Button>
+                                                <Button type="primary" class="middle-btn" @click="saveContent">保存
+                                                </Button>
+                                            </div>
 
-                <div slot="footer">
-                </div>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-white-card task-detail-handler-wrap">
+                            <div class="task-detail-handler-set">
+                                <Row>
+                                    <i-col>
+                                        <div class="note-aside muted">
+                                            <Icon type="ios-stopwatch-outline" size="24"></Icon>
+                                            <span class="title">执行状态</span>
+                                            <Dropdown class="task-level-list" trigger="click" @on-click="changeTaskExecute">
+                                                <a class="muted">{{ task.task_execute_name }}</a>
+                                                <Dropdown-menu slot="list">
+                                                    <Dropdown-item v-for="(task_execute,index) in task_execute_state_list"
+                                                                   :key="index"
+                                                                   :name="index">
+                                                        <Button type="text" size="small">{{ task_execute.name }}</Button>
+                                                        <Icon type="ios-checkmark-empty" size="24" style="float: right"
+                                                              class="muted"
+                                                              v-if="task_execute.key == task.execute_state"></Icon>
+                                                    </Dropdown-item>
+                                                </Dropdown-menu>
+                                            </Dropdown>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-white-card task-detail-handler-wrap">
+                            <div class="task-detail-handler-set">
+                                <Row>
+                                    <i-col>
+                                        <div class="note-aside muted">
+                                            <Icon type="ios-circle-outline" size="24"></Icon>
+                                            <span class="title">优先级</span>
+                                            <Dropdown class="task-level-list" trigger="click" @on-click="changeTaskLevel">
+                                                <Button :type="task.task_level_show_type" size="small">{{
+                                                    task.task_level_name }}
+                                                </Button>
+                                                <Dropdown-menu slot="list">
+                                                    <Dropdown-item v-for="(task_level,index) in task_level_list"
+                                                                   :key="index"
+                                                                   :name="index">
+                                                        <Button :type="task_level.show_type" size="small">{{ task_level.name
+                                                            }}
+                                                        </Button>
+                                                        <Icon type="ios-checkmark-empty" size="24" style="float: right"
+                                                              class="muted" v-if="task_level.key == task.pri"></Icon>
+                                                    </Dropdown-item>
+                                                </Dropdown-menu>
+                                            </Dropdown>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-white-card task-detail-handler-wrap">
+                            <div class="task-detail-handler-set">
+                                <Row>
+                                    <i-col>
+                                        <div class="note-aside muted">
+                                            <Icon type="ios-pricetag-outline" size="24"></Icon>
+                                            <span class="title">标签</span>
+                                            <Tag class="tag-circle" v-for="(tag,tag_index) in task.task_tag_item_list"
+                                                 :key="tag.key" :name="tag_index" :color="tag.color" closable
+                                                 @on-close="removeTaskTag">{{ tag.name }}
+                                            </Tag>
+                                            <Dropdown class="task-level-list" trigger="click" @on-click="addTaskTag">
+                                                <a class="muted m-l-xs">
+                                                    <Icon type="ios-plus-outline" size="20"></Icon>
+                                                </a>
+                                                <Dropdown-menu slot="list">
+                                                    <Dropdown-item v-for="(task_tag,index) in task_tag_list" :key="index"
+                                                                   :name="index">
+                                                        <Button size="small" type="text">{{ task_tag.name }}</Button>
+                                                        <Icon type="ios-checkmark-empty" size="24" style="float: right"
+                                                              class="muted" v-if="showTaskSelect(task_tag.key)"></Icon>
+                                                    </Dropdown-item>
+                                                </Dropdown-menu>
+                                            </Dropdown>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content" style="margin-bottom: 0">
+                        <div class="detail-white-card task-detail-handler-wrap no-border">
+                            <div class="task-detail-handler-set">
+                                <Row>
+                                    <i-col>
+                                        <div class="note-aside muted">
+                                            <Icon type="ios-list-outline" size="24"></Icon>
+                                            <span class="title">子任务 <span v-show="task.children_task">· {{showTaskCount(task.children_task,1)}}/{{showTaskCount(task.children_task,-1)}}</span></span>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-white-card task-detail-handler-wrap">
+                            <div class="task-detail-handler-set text-default" style="padding-left: 0;">
+                                <Row style="padding-bottom: 10px;">
+                                    <i-col v-if="task.children_task">
+                                        <SlickList  lockAxis="y" axis="y" :pressDelay="500" v-model="task.children_task" @input="SlickEvent" class="children-task-list">
+                                            <SlickItem class="children-task" v-for="(children,index) in task.children_task"
+                                                :key="children.id" :index="index" v-if="children.task_state == 0">
+                                                <div class="link-head">
+                                                    <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
+                                                        <a class="check-box" @click.stop="setTaskState(children,false)"><span
+                                                                class="ivu-icon ivu-icon-checkmark"></span></a>
+                                                        <Input v-model="children.name"
+                                                               v-if="show_name_edit && edit_task_id == children.id"
+                                                               class="task-input muted"
+                                                               @on-blur="editName(children)" :autofocus="true"/>
+                                                        <p class="task-title"
+                                                           @click="show_name_edit = true; edit_task_id = children.id"
+                                                           v-else>
+                                                            <Tooltip placement="top" content="点击即可编辑">
+                                    <span :class="{'muted':children.task_state == 1}" style="line-height: 25px">
+                                        {{ children.name }}
+                                    </span>
+                                                            </Tooltip>
+                                                        </p>
+                                                        <div @click="show_task_user = !show_task_user"
+                                                             style="cursor: pointer;">
+                                                            <Dropdown :transfer="true" trigger="click"
+                                                                      @on-click="addTaskExecutorUser($event,children.id)"
+                                                                      v-if="project_user_list.length > 0">
+                                                                <img class="task-avatar avatar img-circle img-24"
+                                                                     :src="children.executor_user_info.avatar" alt="">
+                                                                <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
+                                                                <a class="task-detail-icon muted" @click.stop="init(children.id)">
+                                                                    <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
+                                                                </a>
+                                                                <Dropdown-menu slot="list" class="children-task-user-list">
+                                                                    <p class="m-sm">设置执行者</p>
+                                                                    <Dropdown-item
+                                                                            v-for="(user,index) in project_user_list"
+                                                                            :key="index"
+                                                                            :name="user.id">
+                                                                        <img class="avatar img-circle img-24 pull-left m-r-sm "
+                                                                             :src="user.avatar">
+                                                                        <span class="muted"
+                                                                              style="line-height: 25px;">{{ user.realname }}</span>
+                                                                        <Icon type="ios-checkmark-empty"
+                                                                              v-if="user.id == children.executor_user_info.id"></Icon>
+                                                                    </Dropdown-item>
+                                                                </Dropdown-menu>
+                                                            </Dropdown>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </SlickItem>
+                                            <div class="children-task" v-for="(children,index) in task.children_task"
+                                                       :key="children.id" :index="index" v-if="children.task_state == 1">
+                                                <div class="link-head">
+                                                    <div class="task children-task-title-wrap" :class="{'done': children.task_state == 1}">
+                                                        <a class="check-box" @click.stop="setTaskState(children,false)"><span
+                                                                class="ivu-icon ivu-icon-checkmark"></span></a>
+                                                        <Input v-model="children.name"
+                                                               v-if="show_name_edit && edit_task_id == children.id"
+                                                               class="task-input muted"
+                                                               @on-blur="editName(children)" :autofocus="true"/>
+                                                        <p class="task-title"
+                                                           @click="show_name_edit = true; edit_task_id = children.id"
+                                                           v-else>
+                                                            <Tooltip placement="top" content="点击即可编辑">
+                                    <span :class="{'muted':children.task_state == 1}" style="line-height: 25px">
+                                        {{ children.name }}
+                                    </span>
+                                                            </Tooltip>
+                                                        </p>
+                                                        <div @click="show_task_user = !show_task_user"
+                                                             style="cursor: pointer;">
+                                                            <Dropdown :transfer="true" trigger="click"
+                                                                      @on-click="addTaskExecutorUser($event,children.id)"
+                                                                      v-if="project_user_list.length > 0">
+                                                                <img class="task-avatar avatar img-circle img-24"
+                                                                     :src="children.executor_user_info.avatar" alt="">
+                                                                <p class="task-time"><span v-if="children.end_time">{{showTaskSettingTime(children.end_time)}}</span></p>
+                                                                <a class="task-detail-icon muted" @click.stop="init(children.id)">
+                                                                    <span class="ivu-icon ivu-icon-ios-arrow-forward"></span>
+                                                                </a>
+                                                                <Dropdown-menu slot="list" class="children-task-user-list">
+                                                                    <p class="m-sm">设置执行者</p>
+                                                                    <Dropdown-item
+                                                                            v-for="(user,index) in project_user_list"
+                                                                            :key="index"
+                                                                            :name="user.id">
+                                                                        <img class="avatar img-circle img-24 pull-left m-r-sm "
+                                                                             :src="user.avatar">
+                                                                        <span class="muted"
+                                                                              style="line-height: 25px;">{{ user.realname }}</span>
+                                                                        <Icon type="ios-checkmark-empty"
+                                                                              v-if="user.id == children.executor_user_info.id"></Icon>
+                                                                    </Dropdown-item>
+                                                                </Dropdown-menu>
+                                                            </Dropdown>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </SlickList>
+                                    </i-col>
+                                    <i-col>
+                                        <div class="children-task" v-show="create_task">
+                                            <div class="link-head">
+                                                <div class="task children-task-title-wrap">
+                                                    <Input v-model="new_task.name"
+                                                           class="task-input muted"/>
+                                                    <div @click="show_task_user = !show_task_user"
+                                                         style="cursor: pointer;">
+                                                        <Dropdown :transfer="true" trigger="click"
+                                                                  @on-click="selectExecutor"
+                                                                  v-if="project_user_list.length > 0">
+                                                            <img class="task-avatar avatar img-circle img-24"
+                                                                 :src="default_executor.avatar" alt="">
+                                                            <p class="task-time"></p>
+                                                            <Dropdown-menu slot="list" class="children-task-user-list">
+                                                                <p class="m-sm">设置执行者</p>
+                                                                <Dropdown-item
+                                                                        v-for="(user,index) in project_user_list"
+                                                                        :key="index"
+                                                                        :name="index">
+                                                                    <img class="avatar img-circle img-24 pull-left m-r-sm "
+                                                                         :src="user.avatar">
+                                                                    <span class="muted"
+                                                                          style="line-height: 25px;">{{ user.realname }}</span>
+                                                                    <Icon type="ios-checkmark-empty"
+                                                                          v-if="user.id == default_executor.id"></Icon>
+                                                                </Dropdown-item>
+                                                            </Dropdown-menu>
+                                                        </Dropdown>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="submit-set pull-right m-t-xs ">
+                                                <Button type="ghost" class="small-btn"
+                                                        @click="create_task = false">取消
+                                                </Button>
+                                                <Button type="primary" class="small-btn"
+                                                        @click="addTask">创建
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                                <div style="height: 22px;padding-left: 10px;" v-show="!create_task">
+                                    <a href="javascript:void(0)" @click="create_task = true">
+                                        <Icon type="plus-circled" style="float: left;font-size: 22px;"></Icon>
+                                        <span style="float: left;margin-top: 2px; margin-left: 5px;">添加子任务</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content" style="margin-bottom: 0">
+                        <div class="detail-white-card task-detail-handler-wrap no-border">
+                            <div class="task-detail-handler-set">
+                                <Row>
+                                    <i-col>
+                                        <div class="note-aside muted">
+                                            <Icon type="link" size="24"></Icon>
+                                            <span class="title">关联的文件</span>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content" style="margin-bottom: 0">
+                        <div class="detail-white-card task-detail-handler-wrap no-border">
+                            <div class="task-detail-handler-set text-default" style="padding-left: 0;">
+                                <Row>
+                                    <i-col>
+                                        <ul class="file-list" v-if="file_list.length > 0">
+                                            <li class="link" v-for="(file,index) in file_list" :key="index">
+                                                <div class="link-head">
+                                                    <div class="link-content m-r-sm">
+                                                        <svg class="icon link-icon" aria-hidden="true">
+                                                            <use :href="formatFile(file.extension)"></use>
+                                                        </svg>
+                                                    </div>
+                                                    <div class="link-title link-content" @click="downloadFile(file.id)">
+                                                       <span>
+                                                        {{ file.title }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="link-content pull-right" style="margin-top: 8px;">
+                                                        <Dropdown trigger="click"
+                                                                  @on-click="file_id = file.id,file_index = index,delete_file_modal = !delete_file_modal">
+                                                            <a href="javascript:void(0)" class="muted">
+                                                                操作
+                                                                <Icon type="arrow-down-b"></Icon>
+                                                            </a>
+                                                            <Dropdown-menu slot="list">
+                                                                <Dropdown-item>删除</Dropdown-item>
+                                                            </Dropdown-menu>
+                                                        </Dropdown>
+                                                    </div>
+
+                                                </div>
+
+                                            </li>
+                                        </ul>
+                                        <!-- <Table :width="auto" :show-header="false" :columns="file_columns" :data="file_list"></Table>-->
+                                    </i-col>
+                                </Row>
+                                <div class="task-file-upload">
+                                    <Upload ref="upload"
+                                            :action="upload_config.url"
+                                            :name="upload_config.name"
+                                            :headers="upload_config.headers"
+                                            :data="task"
+                                            :show-upload-list="false"
+                                            :on-progress="uploadProgress"
+                                            :on-success="uploadSuccess">
+                                        <a href="javascript:void(0)">
+                                            <Icon type="plus-circled" style="float: left;font-size: 22px;"></Icon>
+                                            <span style="float: left;margin-top: 2px; margin-left: 5px; ">添加文件</span>
+                                        </a>
+                                    </Upload>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-content" style="margin-bottom:0;padding: 0">
+                        <div class="detail-white-card task-detail-handler-wrap last-detail-white-card">
+                            <div class="task-detail-handler-set task-user-join">
+                                <Row>
+                                    <i-col>
+                                        <div style="margin-bottom: 5px;">参与者</div>
+                                        <div class="note-aside">
+                                            <Tooltip placement="top" :content="user.user_info.realname"
+                                                     v-for="(user,index) in task_user_list.list"
+                                                     :key="index">
+                                                <img class="avatar img-circle img-24 pull-left item-avatar"
+                                                     style="margin-top: 4px;"
+                                                     :src="user.user_info.avatar" alt="">
+                                            </Tooltip>
+                                            <!--   <Poptip title="提示标题" content="提示内容" placement="bottom">
+                                                   <a  href="javascript:void(0)">
+                                                       <Icon type="plus-circled" class="text-navy " style="font-size: 26px;"></Icon>
+                                                   </a>
+                                                   <div class="api" slot="content">
+                                                       <p class="m-b-sm">添加成员</p>
+                                                       <div>
+                                                             <span class="avatar img-circle img-24 pull-left m-r-sm "
+                                                     style="background-image: url(https://striker.teambition.net/thumbnail/110t8768eb3af2155ab8eadce6ce01c98e21/w/200/h/200);"></span>
+                                                           <span class="muted" style="line-height: 25px;">vilson</span>
+                                                       </div>
+                                                   </div>
+                                               </Poptip>-->
+                                            <div style="display: inline-block">
+                                                <Dropdown :transfer="true" trigger="click"
+                                                          @on-click="addTaskUser">
+                                                    <a href="javascript:void(0)">
+                                                        <Icon type="plus-circled" class="text-navy "
+                                                              style="font-size: 26px;"></Icon>
+                                                    </a>
+                                                    <Dropdown-menu slot="list" class="task-user-list">
+                                                        <p class="m-sm">添加成员・{{ project_user_list.length }}</p>
+                                                        <!--<Dropdown-item style="height: 40px; ">-->
+                                                        <!--<Icon type="ios-person" class="pull-left"-->
+                                                        <!--style="font-size: 24px;"></Icon>-->
+                                                        <!--<span class="pull-left task-user-item"> 所有成员・{{ project_user_list.length }} </span>-->
+                                                        <!--</Dropdown-item>-->
+                                                        <Dropdown-item
+                                                                v-for="(user,index) in project_user_list" :key="index"
+                                                                :name="user.u_user_id">
+                                                            <img class="avatar img-circle img-24 pull-left item-avatar"
+                                                                 :src="user.avatar">
+                                                            <span class="muted"
+                                                                  style="line-height: 25px;">{{ user.realname }}</span>
+                                                            <Icon type="ios-checkmark-empty" v-if="user.is_add"></Icon>
+                                                        </Dropdown-item>
+                                                    </Dropdown-menu>
+                                                </Dropdown>
+                                            </div>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                            <div class="task-detail-handler-set" style="border-top:1px solid #f2f2f2">
+                                <Row>
+                                    <i-col class="activities-timeline early-shown">
+                                        <div class="activities-list-wrap">
+                                            <div class="activity-early-wrap"><a
+                                                    class="activity-early-handler link-add-handler">
+                                                <span class="activity-early-hidden" @click="getTaskLogList(1)"
+                                                      v-if="task_log_list.count > 5 && task_log_list.list.length <= 5">显示较早的 {{ task_log_list.count - 5}} 条动态</span>
+                                                <span v-if="task_log_list.count > 5 && task_log_list.list.length > 5"
+                                                      @click="getTaskLogList()"
+                                                      class="activity-early-shown">隐藏较早的动态</span>
+                                                <!--<span-->
+                                                <!--class="activity-early-loading">正在载入更早的动态...</span>-->
+                                            </a></div>
+                                            <ul class="activities-list">
+                                                <li class="activity creator"
+                                                    v-for="(task_log,index) in task_log_list.list" :key="index">
+                                                    <div v-if="task_log.log_type != 'comment'">
+                                                        <i :class="showLogIcon(task_log.log_type)"
+                                                           class="ivu-icon pull-left muted"></i>
+                                                        <div class="react-time-stamp muted pull-right hinted">
+                                                            <Tooltip placement="top"
+                                                                     :content="showTaskLogTime(task_log.create_time,false)">
+                                                                <time class="time-stamp">
+                                                                    {{ showTaskLogTime(task_log.create_time, true) }}
+                                                                </time>
+                                                            </Tooltip>
+                                                        </div>
+                                                        <div class="activity-body-coyness readable muted">
+                                                            <span> {{ task_log.realname + ' ' + task_log.content }} </span>
+                                                            <div class="activity-content overflow"
+                                                                 @click="showLogContent($event)" v-if="task_log.content">
+                                                                <blockquote class="activity-description"
+                                                                            v-html="task_log.memo"></blockquote>
+                                                                <blockquote class="activity-content-detail"
+                                                                            v-html="task_log.memo"></blockquote>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <img :src="task_log.user_info.avatar" class="comment-avatar avatar img-circle img-24 pull-left m-r-sm" alt="">
+                                                        <div class="react-time-stamp muted pull-right hinted">
+                                                            <Tooltip placement="top"
+                                                                     :content="showTaskLogTime(task_log.create_time,false)">
+                                                                <time class="time-stamp">
+                                                                    {{ showTaskLogTime(task_log.create_time, true) }}
+                                                                </time>
+                                                            </Tooltip>
+                                                        </div>
+                                                        <div class="activity-body-coyness readable muted">
+                                                            <span> {{ task_log.realname }} </span>
+                                                            <div class="activity-content overflow">
+                                                                <p class="task-comment-content"
+                                                                            v-html="task_log.memo"></p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                            <div class="member-tip-wrap"></div>
+                                            <div class="involve-tip-wrap"></div>
+                                            <div class="activities-place-bottom"></div>
+                                        </div>
+                                    </i-col>
+                                </Row>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="task-comment">
+                        <Input class="comment-content" v-model="task_comment" placeholder="发表评论" style="width: 480px"></Input>
+                        <Button type="primary" :disabled="task_comment==''" @click="commitComment" style="width: 70px;margin-left: 10px;">评论</Button>
+                    </div>
+                    <div slot="footer">
+                    </div>
                 </vue-scroll>
             </Modal>
             <Modal
@@ -690,7 +713,10 @@
         delTaskFile,
         getTaskFileList,
         addTask,
-        exchangeTaskSort
+        exchangeTaskSort,
+        addTaskComment,
+        editTaskComment,
+        delTaskComment,
     } from "@/api/project";
 
     export default {
@@ -734,6 +760,7 @@
                         name: ''
                     }
                 },
+                task_comment: '',
                 create_task: false,
                 new_task:{
                     pid: 0,
@@ -1034,6 +1061,18 @@
                     if (result && emit) {
                         app.$emit('on-task-update', task, 'update', index);
                     }
+                    app.getTaskLogList();
+                });
+            },
+            commitComment(){
+                let app = this;
+                const comment = this.task_comment.trim();
+                if (!comment) {
+                    app.$Message.success('至少说点啥吧~')
+                    return false;
+                }
+                addTaskComment(app.task_id, comment).then(res=>{
+                    app.task_comment = '';
                     app.getTaskLogList();
                 });
             },
@@ -1473,6 +1512,23 @@
     }
 </script>
 <style>
+    .task-detail-modal .task-comment{
+        position: fixed;
+        bottom: 94px;
+        width: 600px;
+        padding: 15px;
+        z-index: 2;
+        background: #FFF;
+    }
+    .task-detail-modal .comment-content{
+
+    }
+    .task-detail-modal .comment-avatar{
+        position: absolute;
+        left: 5px;
+        width: 34px;
+        height: 34px;
+    }
     .ivu-select-dropdown{
         z-index: 2000 !important;
         max-height: inherit !important;
@@ -1567,7 +1623,8 @@
     }
 
     .last-detail-white-card {
-        min-height: 353px;
+        min-height: 300px;
+        margin-bottom: 50px;
         border-radius: 0;
         padding-top: 10px;
         background: #f5f5f5 !important;
