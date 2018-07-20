@@ -41,7 +41,7 @@ export function getUserList(project_id, keyword = '', task_id = 0) {
 }
 
 export function getTypeInfo(project_type_id) {
-    return $http.post('Project_ProjectType.getList', {project_type_id: project_type_id});
+    return $http.post('Project_ProjectType.getInfo', {project_type_id: project_type_id});
 }
 
 export function getTypeList(page_size = COMMON.PAGE_SIZE, page_num = COMMON.PAGE_NUM, keyword = '') {
