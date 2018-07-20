@@ -3,7 +3,7 @@
         <wrapper-content pageTitle="">
             <div slot="page-header" class="page-header">
                 <Row>
-                    <i-col span="18">
+                    <i-col span="16">
                         <div class="header-title">
                             <span>『 {{ yiyan.hitokoto }}』 —— 《{{ yiyan.from }}》</span> <a class="muted"
                                                                                           @click="getYiYan">
@@ -20,7 +20,7 @@
                             </div>
                         </div>
                     </i-col>
-                    <i-col span="6">
+                    <i-col span="8">
                         <div class="page-header-extra">
                             <div>
                                 <p>任务数</p>
@@ -538,6 +538,7 @@
                     {
                         title: '内容',
                         key: 'name',
+                        width: 300,
                         render: (h, params) => {
                             return h('router-link', {
                                 attrs: {
@@ -569,7 +570,7 @@
                     {
                         title: '项目',
                         key: 'name',
-                        width: 300,
+                        // width: 300,
                         render: (h, params) => {
                             return h('span', {
                                 attrs: {

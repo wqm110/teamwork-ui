@@ -166,12 +166,7 @@
                             const content = res.data;
                             const code = res.ret;
                             const msg = res.msg;
-                            if (code !== 200) {
-                                app.$Message.warning({
-                                    content: msg,
-                                    duration: 3
-                                });
-                            } else {
+                            if (code == 200){
                                 if (app.loginValidate.remember) {
                                     duration = 15 * 24;
                                 }
@@ -190,6 +185,8 @@
                                     if (setting.data) {
                                         app.$store.dispatch('SET_SYSTEM_INFO', setting.data);
                                     }
+                                }).catch(res=>{
+                                    app.sending = false;
                                 });
                                 getUserMenu().then(user_menu => {
                                     const menu = {
@@ -209,8 +206,14 @@
                                         // app.$router.push(menu_model_list[0]['path'])
                                         app.$router.push(app.last_path)
                                     });
+                                }).catch(res=>{
+                                    app.sending = false;
                                 });
+                            }else{
+                                app.sending = false;
                             }
+                        }).catch(res=>{
+                            app.sending = false;
                         });
                     }
                 })

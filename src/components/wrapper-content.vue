@@ -15,17 +15,11 @@
     </div>
 </template>
 <script type="es6">
-    import MenuTop from '../components/menu-top.vue'
-    import MenuSlide from '../components/menu-slide.vue'
     import {mapState} from 'vuex'
     import {getClassObj, getStore} from '../assets/js/utils'
     import $ from 'jquery'
 
     export default {
-        components: {
-            MenuTop,
-            MenuSlide,
-        },
         props: {
             pageTitle: {
                 default: ''

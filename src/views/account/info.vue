@@ -298,8 +298,6 @@
                             if (res.ret === 200) {
                                 app.$Message.success('修改成功');
                                 app.getUserInfo()
-                            } else {
-                                app.$Message.warning(res.msg);
                             }
                         });
                     }
