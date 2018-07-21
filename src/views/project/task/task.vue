@@ -4,7 +4,8 @@
             <div class="project-nav-header">
                 <Breadcrumb class="text-default" separator=">">
                     <!--<Breadcrumb-item href="/project/all">项目</Breadcrumb-item>-->
-                    <Breadcrumb-item>{{ project.name }} <span class="text-warning" v-show="project.name">（长按列表可拖动排序）</span></Breadcrumb-item>
+                    <Breadcrumb-item>{{ project.name }} <span class="text-warning"
+                                                              v-show="project.name">（长按列表可拖动排序）</span></Breadcrumb-item>
                 </Breadcrumb>
             </div>
             <section class="nav-body">
@@ -44,7 +45,8 @@
                      </div>
                  </SlickItem>
              </SlickList>-->
-            <SlickList lockAxis="x" axis="x" :pressDelay="500" :pressThreshold="150" helperClass="task-type-move" v-model="task_type_list" class="board-scrum-stages" @input="SlickEvent($event,'task_type')">
+            <SlickList lockAxis="x" axis="x" :pressDelay="500" :pressThreshold="150" helperClass="task-type-move"
+                       v-model="task_type_list" id="board-scrum-stages" class="board-scrum-stages" @input="SlickEvent($event,'task_type')">
                 <SlickItem class="scrum-stage" :class="{ 'fixed-creator': task_type.fixed_creator == true}"
                            v-for="(task_type,index) in task_type_list" :index="index"
                            :key="task_type.id">
@@ -63,8 +65,12 @@
                                 <!--</Tooltip>-->
                                 <DropdownMenu slot="list">
                                     <header class="popover-header">
-                                        <p class="popover-title">菜单列表</p>
+                                        <p class="popover-title">列表菜单</p>
                                     </header>
+                                    <DropdownItem class="muted" :name="'editTaskType_' + task_type.id + '_' + index">
+                                        <Icon size="14" class="m-r-xs" type="edit"></Icon>
+                                        编辑列表
+                                    </DropdownItem>
                                     <DropdownItem class="muted" :name="'setExecutor_' + task_type.id + '_' + index">
                                         <Icon size="14" class="m-r-xs" type="person"></Icon>
                                         设置本列所有任务执行者
@@ -77,16 +83,22 @@
                                         <Icon size="14" class="m-r-xs" type="trash-b"></Icon>
                                         删除本列所有任务
                                     </DropdownItem>
+                                    <DropdownItem class="muted" :name="'delTaskType_' + task_type.id + '_' + index">
+                                        <Icon size="14" class="m-r-xs" type="trash-b"></Icon>
+                                        删除列表
+                                    </DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>
                         </div>
                     </header>
                     <div class="scrum-stage-wrap hidden-creator ui-sortable"
                          :class="{ 'hidden-creator-bottom': task_type.show_card == true}">
-                        <section :id="task_type.id + '-section'" :task-type-index="index" class="scrum-stage-content thin-scroll">
+                        <section :id="task_type.id + '-section'" :task-type-index="index"
+                                 class="scrum-stage-content thin-scroll">
                             <!--未完成列表-->
                             <SlickList lockAxis="y" axis="y" :pressDelay="500" helperClass="task-move"
-                                       v-model="task_type.list" @input="SlickEvent($event,'task')" class="scrum-stage-tasks">
+                                       v-model="task_type.list" @input="SlickEvent($event,'task')"
+                                       class="scrum-stage-tasks">
                                 <SlickItem class="task task-card ui-sortable-handle"
                                            :class="showTaskLevel(task.pri)"
                                            @click.native="showTaskDetail(task.id,index,task_index)"
@@ -119,7 +131,11 @@
                                                 <span class="icon-wrapper muted" v-if="task.has_file">
                                                      <Icon type="android-attach"></Icon>
                                                </span>
-                                                <span class="icon-wrapper muted" style="width: 45px" v-if="task.has_children">
+                                                <span class="icon-wrapper muted" v-if="task.has_comment">
+                                                    <Icon type="ios-chatboxes-outline"></Icon>
+                                                </span>
+                                                <span class="icon-wrapper muted" style="width: 45px"
+                                                      v-if="task.has_children">
                                                      <Icon type="ios-list-outline"></Icon>
                                                     <span class="m-l-xs">{{showTaskCount(task.children_task,1)}}/{{showTaskCount(task.children_task,-1)}}</span>
                                                </span>
@@ -207,6 +223,29 @@
                         </section>
                     </div>
                 </SlickItem>
+                <div class="scrum-stage" style="height: auto;cursor: default;">
+                    <header class="scrum-stage-header ui-sortable-handle">
+                        <div class="stage-name hinted" style="width: 100%">
+                            <a class="muted" v-show="!add_task_type" @click="add_task_type = !add_task_type">
+                                <span class="ivu-icon ivu-icon-plus"></span>
+                                <span>新建任务列表...</span>
+                            </a>
+                            <div v-show="add_task_type">
+                                <div>
+                                    <Input size="large" v-model="task_type_name" placeholder="新建任务列表..." :autofocus="true"></Input>
+                                </div>
+                                <div style="text-align: right;padding-top: 10px;">
+                                    <Button type="text" class="middle-btn"
+                                            @click="add_task_type = !add_task_type">
+                                        取消
+                                    </Button>
+                                    <Button type="primary" class="middle-btn" @click="addTaskType">保存
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+                </div>
             </SlickList>
         </wrapper-content>
         <Modal class="menu-modal"
@@ -371,6 +410,12 @@
             </div>
         </Modal>
         <Modal
+                v-model="edit_task_type_modal"
+                @on-ok="editTaskType"
+                title="编辑列表">
+            <Input size="large" v-model="edit_task_type_name" placeholder="列表名称" :autofocus="true"></Input>
+        </Modal>
+        <Modal
                 v-model="set_type_endTime_modal"
                 class-name="date-time-modal"
                 title="设置截止时间">
@@ -447,6 +492,15 @@
             <div slot="footer">
             </div>
         </Modal>
+        <Modal
+                v-model="del_task_type_modal"
+                title="操作提示">
+            <p>真的要将删除本列表吗？ </p>
+            <div slot="footer">
+                <Button type="text" @click="del_task_type_modal = false">再想想</Button>
+                <Button type="error" :loading="send_loading" @click="delTaskType">真的</Button>
+            </div>
+        </Modal>
         <task-detail :showModal="show_task_detail" :task_id="task_id" @on-modal-change="modalChange"
                      @on-task-update="taskUpdate">
         </task-detail>
@@ -481,7 +535,10 @@
         selectProjectUser,
         addProjectUser,
         delProjectUser,
+        addTaskType,
         delTypeTask,
+        delTaskType,
+        editTaskType,
         setTypeTaskEndTime,
         setTypeTaskExecutor,
         exchangeTaskSort,
@@ -500,6 +557,7 @@
             return {
                 menu_modal: false,
                 user_menu_modal: false,
+                add_task_type: false,
                 show_task_detail: false,
                 date_picker_option: {
                     disabledDate(date) {
@@ -551,9 +609,11 @@
 
                 project_setting_modal: false,
 
+                edit_task_type_modal: false,
                 del_type_task_modal: false,
                 set_type_endTime_modal: false,
                 set_executor_modal: false,
+                del_task_type_modal: false,
                 type_task_id: 0,
                 select_task_type_index: 0,
 
@@ -564,6 +624,8 @@
                 exchanging: false,//停止拖拽时会触发两次，所以加此限制
                 chang_type: '',
 
+                edit_task_type_name: '',
+                task_type_name: '',
 
                 timer: false,
                 screenHeight: document.body.clientHeight,
@@ -647,7 +709,7 @@
             }
         },
         methods: {
-            SlickEvent(list,type){
+            SlickEvent(list, type) {
                 console.log(list);
                 const send = [];
                 if (type === 'task') {
@@ -657,24 +719,24 @@
                         }
                     });
                     exchangeTaskSort(JSON.stringify(send));
-                }else{
+                } else {
                     list.forEach(function (v, k) {
                         send.push(v.id);
                     });
                     exchangeTaskTypeSort(JSON.stringify(send));
                 }
             },
-            sortEnd(event){
+            sortEnd(event) {
                 console.log(event);
             },
-            showTaskCount(list,state){
+            showTaskCount(list, state) {
                 let count = 0;
                 if (!list) {
                     return count;
                 }
                 if (state == -1) {
                     count = list.length;
-                }else{
+                } else {
                     list.forEach(function (v, k) {
                         if (v.task_state == state) {
                             count++;
@@ -687,9 +749,9 @@
             getTaskType() {
                 let app = this;
                 app.task_type_list = [];
-                getTaskTypeList(app.project_id).then(res => {
+                getTaskTypeList(app.project_id,100).then(res => {
                     app.task_type_list = res.data.list;
-                    app.task_type_list.forEach(function (v,k) {
+                    app.task_type_list.forEach(function (v, k) {
                         app.getList(v.id, k)
                     });
                 });
@@ -701,9 +763,9 @@
                     app.hasScrolled();
                     app.task_type_list[index].list = res.data.list;
                     const task_id = app.$route.query.id;
-                    res.data.list.forEach(function (v,k) {
+                    res.data.list.forEach(function (v, k) {
                         if (task_id == v.id) {
-                            app.showTaskDetail(task_id,index,k)
+                            app.showTaskDetail(task_id, index, k)
                         }
                     })
                 });
@@ -797,6 +859,26 @@
                             desc: '你可以点击该任务继续进行详细设置'
                         });
                     }
+                });
+            },
+            addTaskType() {
+                if (!this.task_type_name) {
+                    this.$Message.warning('请输入列表名称', 2);
+                    return false;
+                }
+                addTaskType(this.task_type_name, this.project_id).then(res => {
+                    const task_type = {
+                        id: res.data,
+                        name: this.task_type_name,
+                        project: this.project_id,
+                        show_card: false,
+                        list: [],
+                    };
+                    this.task_type_list.push(task_type);
+                    this.task_type_name = '';
+                    this.$nextTick(function () {
+                        document.getElementById("board-scrum-stages").scrollLeft = 10000;
+                    });
                 });
             },
             //确认添加任务
@@ -915,6 +997,10 @@
                 const type_index = type_key_list[type_key_list.length - 1];
                 const action = type_key_list[0];
                 switch (action) {
+                    case 'editTaskType':
+                        this.edit_task_type_name = this.task_type_list[type_index].name;
+                        this.edit_task_type_modal = true;
+                        break;
                     case 'delTask':
                         this.del_type_task_modal = true;
                         break;
@@ -923,6 +1009,16 @@
                         break;
                     case 'setExecutor':
                         this.set_executor_modal = true;
+                        break;
+                    case 'delTaskType':
+                        if(this.task_type_list[type_index].list.length >0){
+                            this.$Modal.warning({
+                                title: '操作警告',
+                                content: '删除列表前必须先清空列表任务'
+                            });
+                            return false;
+                        }
+                        this.del_task_type_modal = true;
                         break;
                 }
                 this.type_task_id = type_key;
@@ -936,8 +1032,37 @@
                     app.del_type_task_modal = false;
                     if (res.ret === 200) {
                         app.task_type_list[app.select_task_type_index].list = []
-                    } else {
-                        app.$Message.warning(res.msg)
+                    }
+                });
+            },
+            delTaskType() {
+                let app = this;
+                if(app.task_type_list[app.select_task_type_index].list.length >0){
+                    app.$Message.warning('删除列表前必须先清空列表任务');
+                    return false;
+                }
+                app.send_loading = true;
+                delTaskType(app.type_task_id).then(res => {
+                    app.send_loading = false;
+                    app.del_task_type_modal = false;
+                    if (res.ret === 200) {
+                        app.task_type_list.splice(app.select_task_type_index, 1);
+                    }
+                });
+            },
+            editTaskType() {
+                let app = this;
+                if(!app.edit_task_type_name){
+                    app.$Message.destroy();
+                    app.$Message.warning('列表最好得有个名字~');
+                    return false;
+                }
+                app.send_loading = true;
+                editTaskType(app.type_task_id,app.edit_task_type_name).then(res => {
+                    app.send_loading = false;
+                    app.edit_task_type_modal = false;
+                    if (res.ret === 200) {
+                        app.task_type_list[app.select_task_type_index].name = app.edit_task_type_name;
                     }
                 });
             },
@@ -955,8 +1080,6 @@
                         $.each(app.task_type_list[app.select_task_type_index].list, function (key, value) {
                             value.end_time = end_time
                         })
-                    } else {
-                        app.$Message.warning(res.msg)
                     }
                 });
             },
@@ -971,8 +1094,6 @@
                         $.each(app.task_type_list[app.select_task_type_index].list, function (key, value) {
                             value.executor_user_info = res.data;
                         })
-                    } else {
-                        app.$Message.warning(res.msg);
                     }
                 });
             },

@@ -250,8 +250,23 @@ export function getTaskExecuteStateList() {
     return $http.post('Project_Task.getTaskExecuteStateList');
 }
 
-export function getTaskTypeList(project_id) {
-    return $http.post('Project_TaskType.getList', {project_id: project_id});
+export function getTaskTypeList(project_id, page_size = COMMON.PAGE_SIZE) {
+    return $http.post('Project_TaskType.getList', {project_id: project_id, page_size: page_size});
+}
+
+export function addTaskType(type_name, project_id, sort = 0) {
+    return $http.post('Project_TaskType.addTaskType', {type_name: type_name, project_id: project_id, sort: sort});
+}
+
+export function editTaskType(task_type_id, type_name) {
+    return $http.post('Project_TaskType.editTaskType', {
+        task_type_id: task_type_id,
+        type_name: type_name
+    });
+}
+
+export function delTaskType(task_type_id) {
+    return $http.post('Project_TaskType.delTaskType', {task_type_id: task_type_id});
 }
 
 export function getProjectBuildList(project_id, keyword) {
@@ -302,9 +317,11 @@ export function doProjectTemplate(action = 'add', data) {
 export function addTaskComment(task_id, comment) {
     return $http.post('Project_Task.addTaskComment', {task_id: task_id, memo: comment});
 }
+
 export function editTaskComment(id, comment) {
     return $http.post('Project_Task.editTaskComment', {id: id, memo: comment});
 }
+
 export function delTaskComment(id) {
     return $http.post('Project_Task.delTaskComment', {id: id});
 }

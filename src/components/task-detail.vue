@@ -1108,6 +1108,7 @@
                 addTaskComment(app.task_id, comment).then(res => {
                     app.task_comment = '';
                     app.getTaskLogList();
+                    app.task.has_comment = true;
                 });
             },
             changeTaskLevel(index) {
